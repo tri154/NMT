@@ -135,15 +135,19 @@ def svm_tfidf():
 
 
 class IMDBDataset(Dataset):
-    def __init__(self, text_embs, labels):
-        self.X = text_embs
-        self.y = labels
+    def __init__(self, dataset, vectorizer):
+        self.texts = [item["data"] for item in dataset]
+        self.labels = [item["label"] for item in dataset]
+        self.vectorizer = vectorizer
+        self.X_sparse = vectorizer.transform(self.texts)
 
     def __len__(self):
-        return len(self.y)
+        return len(self.labels)
 
     def __getitem__(self, idx):
-        return torch.tensor(self.X[idx], dtype=torch.float32), torch.tensor(self.y[idx], dtype=torch.long)
+        x = self.X_sparse[idx].toarray().squeeze()
+        y = self.labels[idx]
+        return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.long)
 
 class MLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -195,16 +199,16 @@ def mlp_tfidf():
     vectorizer = TfidfVectorizer(vocabulary=vocab, max_features=1000)
     vectorizer.fit([item["data"] for item in train_set])
 
-    x_train, y_train = prepare_data_torch(train_set, vectorizer)
-    x_test, y_test = prepare_data_torch(test_set, vectorizer)
+    # x_train, y_train = prepare_data_torch(train_set, vectorizer)
+    # x_test, y_test = prepare_data_torch(test_set, vectorizer)
 
-    train_dataset = IMDBDataset(x_train, y_train)
-    test_dataset = IMDBDataset(x_test, y_test)
+    train_dataset = IMDBDataset(train_set, vectorizer)
+    test_dataset = IMDBDataset(test_set, vectorizer)
 
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=64)
 
-    input_size = x_train.shape[-1]
+    input_size = len(vectorizer.get_feature_names_out())
     hidden_dim = 256
     output_size = 2
     model = MLP(input_size, hidden_dim, output_size)
