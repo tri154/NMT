@@ -62,11 +62,19 @@ def prepare_data(dataset, vectorizer):
     y = np.array(labels)
     return X, y
 
+def prepare_data_torch(dataset, vectorizer):
+    texts = [item["data"] for item in dataset]
+    labels = [item["label"] for item in dataset]
+    X = torch.tensor(vectorizer.transform(texts).toarray())
+    y = torch.tensor(labels)
+    return X, y
+
 def naive_bayes():
     vocab = load_vocab()
     train_set = load_data('train')
     test_set = load_data('test')
     vectorizer = CountVectorizer(vocabulary=vocab)
+    vectorizer.fit([item["data"] for item in train_set])
 
     x_train, y_train = prepare_data(train_set, vectorizer)
     x_test, y_test = prepare_data(test_set, vectorizer)
@@ -87,6 +95,7 @@ def svm_bow():
     train_set = load_data('train')
     test_set = load_data('test')
     vectorizer = CountVectorizer(vocabulary=vocab)
+    vectorizer.fit([item["data"] for item in train_set])
 
     x_train, y_train = prepare_data(train_set, vectorizer)
     x_test, y_test = prepare_data(test_set, vectorizer)
@@ -108,6 +117,7 @@ def svm_tfidf():
     test_set = load_data("test")
 
     vectorizer = TfidfVectorizer(vocabulary=vocab)
+    vectorizer.fit([item["data"] for item in train_set])
 
     X_train, y_train = prepare_data(train_set, vectorizer)
     X_test, y_test = prepare_data(test_set, vectorizer)
@@ -183,9 +193,10 @@ def mlp_tfidf():
     train_set = load_data("train")
     test_set = load_data("test")
     vectorizer = TfidfVectorizer(vocabulary=vocab, max_features=1000)
+    vectorizer.fit([item["data"] for item in train_set])
 
-    x_train, y_train = prepare_data(train_set, vectorizer)
-    x_test, y_test = prepare_data(test_set, vectorizer)
+    x_train, y_train = prepare_data_torch(train_set, vectorizer)
+    x_test, y_test = prepare_data_torch(test_set, vectorizer)
 
     train_dataset = IMDBDataset(x_train, y_train)
     test_dataset = IMDBDataset(x_test, y_test)
