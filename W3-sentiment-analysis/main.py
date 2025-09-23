@@ -213,7 +213,7 @@ def mlp_tfidf():
     output_size = 2
     model = MLP(input_size, hidden_dim, output_size)
 
-    train_model(model, train_loader, test_loader, epochs=5, lr=1e-3, device="cpu")
+    train_model(model, train_loader, test_loader, epochs=5, lr=1e-3, device="gpu")
 
 if __name__ == "__main__":
     mlp_tfidf()
