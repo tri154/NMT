@@ -1,0 +1,32 @@
+dataset:
+list (map: data, label, rating)
+
+
+bag of word
+replace with tf-idf
+svm + tf-idf: 88
+
+
+deeplearning:
+Linear
+
+
+RAG
+KG knowledge graph
+propmting
+system (devops)
+
+
+Lay opensource, promt tat ca cac case,
+
+fine tune dc khong
+
+
+System trien khai the nao
+
+
+GK: trac nghiem cong viet giay
+BTL:
+
+
+Doc NLTK, spicy
