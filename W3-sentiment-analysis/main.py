@@ -10,6 +10,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
+from torch.nn import LSTM
+from torch.optim import AdamW
+from torch.nn.utils.rnn import pack_sequence
+from torch.nn.utils.rnn import pad_sequence
 
 def load_data(tag):
     cur_dir = os.getcwd()
@@ -149,6 +153,7 @@ class IMDBDataset(Dataset):
         y = self.labels[idx]
         return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.long)
 
+
 class MLP(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super(MLP, self).__init__()
@@ -159,6 +164,7 @@ class MLP(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
 
 def train_model(model, train_loader, val_loader, epochs=5, lr=1e-3, device="cpu"):
     model.to(device)
@@ -196,6 +202,7 @@ def mlp_tfidf():
     vocab = load_vocab()
     train_set = load_data("train")
     test_set = load_data("test")
+
     vectorizer = TfidfVectorizer(vocabulary=vocab, max_features=1000)
     vectorizer.fit([item["data"] for item in train_set])
 
@@ -215,5 +222,104 @@ def mlp_tfidf():
 
     train_model(model, train_loader, test_loader, epochs=5, lr=1e-3, device="cuda")
 
+
+class IMDBDataset_lstm(Dataset):
+    def __init__(self, dataset, w2id):
+        self.texts = [item["data"] for item in dataset]
+        self.labels = [item["label"] for item in dataset]
+        self.w2id = w2id
+
+    def preprocessing(self, data):
+        data = data.lower()
+        data= re.sub(pattern = r"[\!\"“”#$%&\*+,-./:;<=>?@^_`()|~=]|\n",
+                         repl = " ",
+                         string = data)
+        data = re.sub(pattern = r"\s+",
+                         repl = " ",
+                         string = data)
+        return data.strip(" ").split(" ")
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        data = self.preprocessing(self.texts[idx])
+        x = torch.LongTensor([self.w2id[w] if w in self.w2id else len(self.w2id) for w in data])
+        y = self.labels[idx]
+        return x, torch.tensor(y, dtype=torch.long)
+
+class LSTM_model(nn.Module):
+    def __init__(self, vocab_size, input_size, output_size, num_classes=2):
+        super(LSTM_model, self).__init__()
+        self.embedding = nn.Embedding(num_embeddings=vocab_size + 1, embedding_dim=output_size)
+        self.rnn = LSTM(input_size, output_size)
+        self.fc = nn.Linear(output_size, num_classes)
+
+    def forward(self, x, mask):
+        embs = self.embedding(x)
+        lengths = mask.sum(dim=1)
+        packed = nn.utils.rnn.pack_padded_sequence(embs, lengths, batch_first=True, enforce_sorted=False)
+
+        packed_out, (h_n, c_n) = self.rnn(packed)
+        logits = self.fc(h_n[-1])
+        return logits
+
+def collate_fn(batch):
+    y = torch.tensor([y for _, y in batch])
+    x = [x for x, _ in batch]
+    x = pad_sequence(x, batch_first=True, padding_value=-1)
+    mask = x != -1
+    x[~mask] = 0
+    return x, y, mask
+
+def lstm():
+    vocab = load_vocab()
+    train_set = load_data("train")
+    test_set = load_data("test")
+
+    w2id = {w:i for i, w in enumerate(vocab)}
+
+    train_dataset = IMDBDataset_lstm(train_set, w2id)
+    test_dataset = IMDBDataset_lstm(test_set, w2id)
+
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, collate_fn=collate_fn)
+    test_loader = DataLoader(test_dataset, batch_size=64, collate_fn=collate_fn)
+
+    device = device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    emb_size = 128
+    epochs = 10
+    lr = 1e-3
+    criterion = nn.CrossEntropyLoss()
+    model = LSTM_model(len(vocab), emb_size, emb_size)
+    optimizer = AdamW(model.parameters(), lr)
+
+    for epoch in range(epochs):
+        model.train()
+
+        total_loss = 0.0
+        for x, y, mask in train_loader:
+            x, y, mask = x.to(device), y.to(device), mask.to(device)
+            optimizer.zero_grad()
+            outputs = model(x, mask)
+            loss = criterion(outputs, y)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
+
+        model.eval()
+        correct, total = 0, 0
+        with torch.no_grad():
+            for x, y, mask in test_loader:
+                x, y, mask = x.to(device), y.to(device), mask.to(device)
+                outputs = model(x, mask)
+                preds = torch.argmax(outputs, dim=1)
+                correct += (preds == y).sum().item()
+                total += y.size(0)
+
+        acc = correct / total
+        print(f"Epoch {epoch+1}/{epochs} - Total Loss: {total_loss:.4f} - Val Acc: {acc:.4f}")
+
+
 if __name__ == "__main__":
-    mlp_tfidf()
+    lstm()
