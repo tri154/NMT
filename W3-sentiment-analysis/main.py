@@ -257,7 +257,7 @@ class LSTM_model(nn.Module):
 
     def forward(self, x, mask):
         embs = self.embedding(x)
-        lengths = mask.sum(dim=1)
+        lengths = mask.sum(dim=1).cpu()
         packed = nn.utils.rnn.pack_padded_sequence(embs, lengths, batch_first=True, enforce_sorted=False)
 
         packed_out, (h_n, c_n) = self.rnn(packed)
