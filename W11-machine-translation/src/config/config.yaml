@@ -1,0 +1,13 @@
+device: cuda
+# folders
+log_path: logs/log.txt
+result_path: results/
+data_dir: ../data
+
+# tokenizer
+min_freq: -1
+
+# training
+lr: !!float 1e-3
+num_epochs: 1
+batch_size: 64
