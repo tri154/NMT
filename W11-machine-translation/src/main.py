@@ -5,13 +5,15 @@ from model import Model
 from trainer import Trainer
 from loss import Loss
 from tester import Tester
+from tokenizer import Tokenizer
 
 def run_training(cfg):
-    pre = Prepocessing(cfg)
-    train_set = CustomDataset(cfg, pre.train_set)
-    dev_set = CustomDataset(cfg, pre.dev_set)
-    test_set = CustomDataset(cfg, pre.test_set)
-    model = Model(cfg)
+    tokenizer = Tokenizer(cfg)
+    pre = Prepocessing(cfg, tokenizer)
+    train_set = CustomDataset(cfg, pre.train_set, tokenizer)
+    dev_set = CustomDataset(cfg, pre.dev_set, tokenizer)
+    test_set = CustomDataset(cfg, pre.test_set, tokenizer)
+    model = Model(cfg, tokenizer).to(cfg.device)
     loss_fn = Loss(cfg)
     tester = Tester(cfg, dev_set, test_set)
     trainer = Trainer(cfg, model, tester=tester, train_set=train_set, loss_fn=loss_fn)

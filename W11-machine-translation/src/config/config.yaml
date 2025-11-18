@@ -4,6 +4,10 @@ log_path: logs/log.txt
 result_path: results/
 data_dir: ../data
 
+# preprocessing
+num_examples: 1000
+max_len: 50
+
 # tokenizer
 min_freq: -1
 
@@ -11,3 +15,7 @@ min_freq: -1
 lr: !!float 1e-3
 num_epochs: 1
 batch_size: 64
+
+# model
+emb_dim: 768
+hidden_dim: 256

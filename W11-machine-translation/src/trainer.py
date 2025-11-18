@@ -20,13 +20,16 @@ class Trainer:
         return opt, sched
 
     def train_one_epoch(self, train_generator, current_epoch):
+        device = self.cfg.device
         self.model.train()
         self.opt.zero_grad()
 
         total_loss = 0.0
-        for idx_batch, batch_input, batch_label in enumerate(train_generator):
+        for idx_batch, (batch_src, batch_trg) in enumerate(train_generator):
+            batch_src = batch_src.to(device)
+            batch_trg = batch_trg.to(device)
             self.opt.zero_grad()
-            batch_pred = self.model(batch_input)
+            batch_pred = self.model(batch_src, batch_trg)
 
             # DEBUG
             print(batch_pred)
