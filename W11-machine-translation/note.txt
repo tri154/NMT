@@ -1,0 +1,3 @@
+(that should be like that) 1. hidden of the first token in the decoder is now the last token's hidden of encoder
+2. seem to not take involved in the number of layer
+3. not take involved in padding in encoder.

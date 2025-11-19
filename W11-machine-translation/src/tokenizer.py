@@ -8,7 +8,15 @@ class Tokenizer:
         self.unk = "<unk>"
         self.sos = "<sos>"
         self.eos = "<eos>"
+
+        # additional tokens share the same id in src and trg.
+        self.pad_id = 0
+        self.unk_id = 1
+        self.sos_id = 2
+        self.eos_id = 3
+
         self.additional_tokens = [self.pad, self.unk, self.sos, self.eos]
+        self.additional_ids = [self.pad_id, self.unk_id, self.sos_id, self.eos_id]
 
         # assign later.
         self.src_vocab = None

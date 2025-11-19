@@ -19,3 +19,4 @@ batch_size: 64
 # model
 emb_dim: 768
 hidden_dim: 256
+unit_dim: 128 # for BahdanauAttention
