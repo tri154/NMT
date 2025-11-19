@@ -9,8 +9,14 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.cfg = cfg
         self.pad_id = tokenizer.pad_id
+        self.trg_vocab = tokenizer.trg_vocab
+
         self.encoder = Encoder(cfg, tokenizer)
         self.decoder = Decoder(cfg, tokenizer)
+        self.fc = nn.Linear(cfg.emb_dim, len(self.trg_vocab), bias=False)
+
+        # weight tying
+        self.fc.weight = self.decoder.embedding.weight
 
     def forward(self, batch_src, batch_trg):
         # for training only.
@@ -40,4 +46,5 @@ class Model(nn.Module):
                 decoder_input = batch_trg[:, i].unsqueeze(-1)
 
         decoder_embs = torch.cat(decoder_embs, dim=1)
-        return None
+        logits = self.fc(decoder_embs)
+        return logits, trg_lengths

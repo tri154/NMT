@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pack_padded_sequence
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class Encoder(nn.Module):
 
@@ -12,12 +12,13 @@ class Encoder(nn.Module):
         vocab_size = len(tokenizer.src_vocab)
 
         self.embedding = nn.Embedding(vocab_size, self.cfg.emb_dim)
-        self.gru = nn.GRU(self.cfg.emb_dim, self.cfg.hidden_dim, batch_first=True)
+        # wt
+        # self.gru = nn.GRU(self.cfg.emb_dim, self.cfg.hidden_dim, batch_first=True)
+        self.gru = nn.GRU(self.cfg.emb_dim, self.cfg.emb_dim, batch_first=True)
 
-    def forward(self, batch_input):
-        pad_id = 0
-        lengths = (batch_input != pad_id).to(int).sum(dim=1)
+    def forward(self, batch_input, lengths):
         embs = self.embedding(batch_input)
-        # embs = pack_padded_sequence(embs, lengths, batch_first=True, enforce_sorted=False)
+        embs = pack_padded_sequence(embs, lengths, batch_first=True, enforce_sorted=False)
         out, h_n = self.gru(embs)
-        return out, h_n, lengths
+        out, _ = pad_packed_sequence(out, batch_first=True)
+        return out, h_n
