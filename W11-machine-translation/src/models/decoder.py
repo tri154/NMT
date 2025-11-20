@@ -54,7 +54,7 @@ class Decoder(nn.Module):
         # self.gru = nn.GRU(self.cfg.emb_dim + self.cfg.hidden_dim, self.cfg.hidden_dim, batch_first=True)
         self.gru = nn.GRU(self.cfg.emb_dim + self.cfg.emb_dim, self.cfg.emb_dim, batch_first=True)
 
-    def forward(self, batch_input, hidden, enc_out, src_mask):
+    def forward(self, batch_input, hidden, enc_out, src_mask=None):
         embs = self.embedding(batch_input)
 
         hidden = hidden.transpose(0, 1)

@@ -9,6 +9,8 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.cfg = cfg
         self.pad_id = tokenizer.pad_id
+        self.sos_id = tokenizer.sos_id
+        self.eos_id = tokenizer.eos_id
         self.trg_vocab = tokenizer.trg_vocab
 
         self.encoder = Encoder(cfg, tokenizer)
@@ -18,22 +20,11 @@ class Model(nn.Module):
         # weight tying
         self.fc.weight = self.decoder.embedding.weight
 
-    def forward(self, batch_src, batch_trg):
-        # for training only.
-        bs, src_max_len = batch_src.shape
-        bs, trg_max_len = batch_trg.shape
 
-        src_lengths = (batch_src != self.pad_id).to(int).sum(dim=1)
-        trg_lengths = (batch_trg != self.pad_id).to(int).sum(dim=1)
-
-        src_mask = torch.arange(src_max_len).expand((bs, src_max_len)) >= src_lengths.unsqueeze(1)
-        src_mask = torch.masked_fill(src_mask.float(), src_mask, float("-inf"))
-
-        enc_out, enc_hidden= self.encoder(batch_src, src_lengths)
-
+    def decoder_teacher_forcing(self, batch_trg, enc_out, enc_hidden, src_mask):
         bs, trg_mlen = batch_trg.shape
-
         decoder_embs = list()
+
         for i in range(0, trg_mlen):
             if i == 0:
                 hidden = enc_hidden[-1].unsqueeze(0) # ensure last layer
@@ -48,4 +39,55 @@ class Model(nn.Module):
 
         decoder_embs = torch.cat(decoder_embs, dim=1)
         logits = self.fc(decoder_embs)
-        return logits, trg_lengths
+        return logits
+
+    def decoder_greedy(self, enc_out, enc_hidden, src_lengths):
+        device = self.cfg.device
+        bs, _, _ = enc_out.shape
+
+        batch_res = list()
+        for sid in range(bs):
+            s_res = list()
+            s_out_length = src_lengths[sid]
+            s_out = enc_out[sid:sid+1, :s_out_length]
+            s_hidden = enc_hidden[:, sid:sid+1, :] # keep dim
+            for tid in range(0, self.cfg.max_len_trg):
+                if tid == 0:
+                    de_input = torch.tensor([[self.sos_id]]).to(device)
+                    s_res.append(self.sos_id)
+                    de_hidden = s_hidden
+                    s_out = s_out
+                de_out, de_hidden = self.decoder(de_input, de_hidden, s_out, src_mask=None)
+                logits = self.fc(de_out)
+                # update
+                de_input = torch.argmax(logits, dim=-1)
+                s_res.append(de_input.item())
+                if tid == self.cfg.max_len_trg - 1:
+                    s_res.append(self.eos_id) # append eos
+                    s_res = torch.tensor(s_res)
+                if de_input.item() == self.eos_id:
+                    s_res = torch.tensor(s_res)
+                    break
+
+            batch_res.append(s_res)
+        return batch_res
+
+    def forward(self, batch_src, batch_trg, is_training=True):
+        # for training only.
+        bs, src_max_len = batch_src.shape
+        bs, trg_max_len = batch_trg.shape
+
+        src_lengths = (batch_src != self.pad_id).to(int).sum(dim=1)
+        trg_lengths = (batch_trg != self.pad_id).to(int).sum(dim=1)
+
+        src_mask = torch.arange(src_max_len).expand((bs, src_max_len)) >= src_lengths.unsqueeze(1)
+        src_mask = torch.masked_fill(src_mask.float(), src_mask, float("-inf"))
+
+        enc_out, enc_hidden = self.encoder(batch_src, src_lengths)
+
+        if is_training:
+            logits = self.decoder_teacher_forcing(batch_trg, enc_out, enc_hidden, src_mask)
+            return logits, trg_lengths
+        else:
+            # expected output: like [bs, mlen] token ids of translated sentences.
+            out = self.decoder_greedy(enc_out, enc_hidden, src_lengths)
