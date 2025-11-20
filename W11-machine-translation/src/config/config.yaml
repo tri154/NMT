@@ -15,6 +15,11 @@ min_freq: -1
 lr: !!float 1e-3
 num_epochs: 1
 batch_size: 64
+max_grad_norm: 1.0
+num_warmups: 0.06
+
+# inference
+max_len_trg: 50
 
 # model
 emb_dim: 768
