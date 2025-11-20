@@ -21,6 +21,7 @@ class Model(nn.Module):
     def forward(self, batch_src, batch_trg):
         # for training only.
         bs, src_max_len = batch_src.shape
+        bs, trg_max_len = batch_trg.shape
 
         src_lengths = (batch_src != self.pad_id).to(int).sum(dim=1)
         trg_lengths = (batch_trg != self.pad_id).to(int).sum(dim=1)

@@ -1,3 +1,10 @@
 (that should be like that) 1. hidden of the first token in the decoder is now the last token's hidden of encoder
 2. seem to not take involved in the number of layer
 3. not take involved in padding in encoder.
+
+# how to prevent the model generate special tokens like <UNK> or <PAD>
+
+modern methods use BPE/Unigram for tokenization then no <UNK> token.
+
+They just ignore it or, not choose the <UNK> and <PAD> as a token to be generated during
+inference.

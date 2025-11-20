@@ -29,14 +29,14 @@ class Trainer:
             batch_src = batch_src.to(device)
             batch_trg = batch_trg.to(device)
             self.opt.zero_grad()
-            batch_pred = self.model(batch_src, batch_trg)
+            batch_logits, trg_lengths = self.model(batch_src, batch_trg)
+            batch_loss = self.loss_fn.compute_loss(batch_logits, batch_trg, trg_lengths)
 
             # DEBUG
-            print(batch_pred)
+            print(batch_loss)
             input("STOP")
             # DEBUG
 
-            batch_loss = self.loss_fn(batch_pred, batch_label)
             batch_loss.backward()
 
             is_updated, is_evaluated = ...
