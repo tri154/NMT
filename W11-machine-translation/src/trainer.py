@@ -5,10 +5,11 @@ from torch.optim import AdamW
 import torch
 
 class Trainer:
-    def __init__(self, cfg, model, tester, train_set, loss_fn):
+    def __init__(self, cfg, model, tokenizer, tester, train_set, loss_fn):
         self.cfg = cfg
         self.tester = tester
         self.model = model
+        self.tokenizer = tokenizer
         self.train_set = train_set
         self.loss_fn = loss_fn
 
@@ -50,10 +51,10 @@ class Trainer:
                 self.sched.step()
 
             if is_evaluated:
-                d_score = self.tester.test(self.model, tag='dev', batch_size=self.cfg.test_batch_size)
-                self.cfg.logging(f"batch id: {idx_batch}, Dev result :", is_printed=True)
-                if d_score > self.best_score_dev:
-                    self.best_score_dev = d_score
+                d_score = self.tester.test(self.model, self.tokenizer, tag='dev', batch_size=self.cfg.test_batch_size)
+                self.cfg.logging(f"batch id: {idx_batch}, Dev result : {d_score}", is_printed=True)
+                if d_score.score > self.best_score_dev:
+                    self.best_score_dev = d_score.score
                     torch.save(self.model.state_dict(), self.cfg.save_path)
 
             total_loss += batch_loss.item()
@@ -79,5 +80,5 @@ class Trainer:
             self.cfg.logging(f"epoch: {idx_epoch + 1}, loss={epoch_loss} .", is_printed=True)
 
         self.model.load_state_dict(torch.load(self.cfg.save_path, map_location=self.cfg.device))
-        t_score  = self.tester.test(self.model, tag='test')
-        self.cfg.logging(f"Test result: score {t_score}", is_printed=True)
+        t_score  = self.tester.test(self.model, self.tokenizer, tag='test', batch_size=self.cfg.test_batch_size)
+        self.cfg.logging(f"Test result: {t_score}", is_printed=True)

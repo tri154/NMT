@@ -28,7 +28,8 @@ class CustomDataset(Dataset):
             trg.append(t)
 
         src = self.tokenizer.token2ids(src, "source")
-        trg = self.tokenizer.token2ids(trg, "target", is_padded=for_training)
+        if for_training:
+            trg = self.tokenizer.token2ids(trg, "target")
 
         src = torch.tensor(src)
         if for_training:

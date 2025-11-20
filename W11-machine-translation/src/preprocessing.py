@@ -89,7 +89,10 @@ class Prepocessing:
         for key, value in res.items():
             src, trg = value["source"], value["target"]
             src_tkn = self.tokenizer.tokenize_with_vocab(src, tag="source")
-            trg_tkn = self.tokenizer.tokenize_with_vocab(trg, tag="target")
+            if key == "train":
+                trg_tkn = self.tokenizer.tokenize_with_vocab(trg, tag="target")
+            else:
+                trg_tkn = trg
             res[key] = {"source": src_tkn,
                         "target": trg_tkn}
         res["src_addition"] = src_tuple
