@@ -13,19 +13,24 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         return self.source[idx], self.value[idx]
 
-    def collate_fn(self, batch):
+    def collate_fn(self, batch, for_training):
+        # training: pad both src and trg
+        # otherwise: only pad src
         pad = self.tokenizer.pad
         src, trg = list(), list()
         mlen_src = max([len(s) for s, t in batch])
         mlen_trg = max([len(t) for s, t in batch])
         for s, t in batch:
             s = s + [pad] * (mlen_src - len(s))
-            t = t + [pad] * (mlen_trg - len(t))
+            if for_training:
+                t = t + [pad] * (mlen_trg - len(t))
             src.append(s)
             trg.append(t)
+
         src = self.tokenizer.token2ids(src, "source")
-        trg = self.tokenizer.token2ids(trg, "target")
+        trg = self.tokenizer.token2ids(trg, "target", is_padded=for_training)
 
         src = torch.tensor(src)
-        trg = torch.tensor(trg)
+        if for_training:
+            trg = torch.tensor(trg)
         return src, trg

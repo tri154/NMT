@@ -72,13 +72,13 @@ class Model(nn.Module):
             batch_res.append(s_res)
         return batch_res
 
-    def forward(self, batch_src, batch_trg, is_training=True):
+    def forward(self, batch_src, batch_trg=None, is_training=True):
         # for training only.
         bs, src_max_len = batch_src.shape
-        bs, trg_max_len = batch_trg.shape
+        if is_training: bs, trg_max_len = batch_trg.shape
 
         src_lengths = (batch_src != self.pad_id).to(int).sum(dim=1)
-        trg_lengths = (batch_trg != self.pad_id).to(int).sum(dim=1)
+        if is_training: trg_lengths = (batch_trg != self.pad_id).to(int).sum(dim=1)
 
         src_mask = torch.arange(src_max_len).expand((bs, src_max_len)) >= src_lengths.unsqueeze(1)
         src_mask = torch.masked_fill(src_mask.float(), src_mask, float("-inf"))
@@ -91,3 +91,4 @@ class Model(nn.Module):
         else:
             # expected output: like [bs, mlen] token ids of translated sentences.
             out = self.decoder_greedy(enc_out, enc_hidden, src_lengths)
+            return out

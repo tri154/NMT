@@ -97,14 +97,14 @@ class Tokenizer:
         else:
             raise Exception("Invalid tag.")
 
-    def token2ids(self, data, tag):
-        data = np.array(data)
-        if tag == "source":
-            fn = np.vectorize(self.src_token2id.get)
-        elif tag == "target":
-            fn = np.vectorize(self.trg_token2id.get)
-        else:
-            raise Exception("Invalid tag.")
+    def token2ids(self, data, tag, is_padded=True):
+        assert tag in ["source", "target"]
+        token2id_get = self.src_token2id.get if tag == "source" else self.trg_token2id.get
+        fn = np.vectorize(token2id_get)
 
-        data = fn(data)
-        return data.tolist()
+        if is_padded:
+            data = fn(np.array(data))
+            data = data.tolist()
+        else:
+            data = [fn(np.array(d)).tolist() for d in data]
+        return data

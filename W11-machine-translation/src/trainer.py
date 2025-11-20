@@ -12,34 +12,36 @@ class Trainer:
         self.train_set = train_set
         self.loss_fn = loss_fn
 
-    def prepare_optimizer_scheduler(self):
+    def prepare_optimizer_scheduler(self, train_dataloader):
         opt = AdamW(self.model.parameters(), lr=self.cfg.lr)
-        # num_warmups, num_updates = ...
-        # sched = get_linear_schedule_with_warmup(opt, num_warmups, num_updates)
-        sched = None
+        # update every batch.
+        num_updates = len(train_dataloader) * self.cfg.num_epochs
+        num_warmups = int(num_updates * self.cfg.num_warmups)
+        sched = get_linear_schedule_with_warmup(opt, num_warmups, num_updates)
         return opt, sched
 
-    def train_one_epoch(self, train_generator, current_epoch):
+    def train_one_epoch(self, train_dataloader, current_epoch):
         device = self.cfg.device
         self.model.train()
         self.opt.zero_grad()
 
         total_loss = 0.0
-        for idx_batch, (batch_src, batch_trg) in enumerate(train_generator):
+        for idx_batch, (batch_src, batch_trg) in enumerate(train_dataloader):
             batch_src = batch_src.to(device)
             batch_trg = batch_trg.to(device)
             self.opt.zero_grad()
-            batch_logits, trg_lengths = self.model(batch_src, batch_trg)
+            batch_logits, trg_lengths = self.model(batch_src, batch_trg, is_training=True)
             batch_loss = self.loss_fn.compute_loss(batch_logits, batch_trg, trg_lengths)
 
             # DEBUG
-            print(batch_loss)
-            input("STOP")
+            # print(batch_loss)
+            # input("break")
             # DEBUG
 
             batch_loss.backward()
 
-            is_updated, is_evaluated = ...
+            is_updated = True
+            is_evaluated = idx_batch == len(train_dataloader) - 1
 
             if is_updated:
                 clip_grad_norm_(self.model.parameters(), self.cfg.max_grad_norm)
@@ -48,7 +50,7 @@ class Trainer:
                 self.sched.step()
 
             if is_evaluated:
-                d_score = self.tester.test(self.model, tag='dev')
+                d_score = self.tester.test(self.model, tag='dev', batch_size=self.cfg.test_batch_size)
                 self.cfg.logging(f"batch id: {idx_batch}, Dev result :", is_printed=True)
                 if d_score > self.best_score_dev:
                     self.best_score_dev = d_score
@@ -59,19 +61,20 @@ class Trainer:
         return total_loss
 
     def train(self, num_epoches, batch_size):
-        train_generator = DataLoader(self.train_set,
-                                     collate_fn=self.train_set.collate_fn,
+        train_collate_fn = lambda batch: self.train_set.collate_fn(batch, for_training=True)
+        train_dataloader = DataLoader(self.train_set,
+                                     collate_fn=train_collate_fn,
                                      batch_size=batch_size,
                                      shuffle=True,
                                      drop_last=True)
 
-        self.opt, self.sched = self.prepare_optimizer_scheduler()
+        self.opt, self.sched = self.prepare_optimizer_scheduler(train_dataloader)
 
         self.best_score_dev = 0
         for idx_epoch in range(num_epoches):
             self.cfg.logging(f'epoch {idx_epoch + 1}/{num_epoches} ' + '=' * 100, is_printed=True)
 
-            epoch_loss = self.train_one_epoch(train_generator, idx_epoch)
+            epoch_loss = self.train_one_epoch(train_dataloader, idx_epoch)
 
             self.cfg.logging(f"epoch: {idx_epoch + 1}, loss={epoch_loss} .", is_printed=True)
 
