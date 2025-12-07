@@ -5,8 +5,8 @@ result_path: results/
 data_dir: ../data
 
 # preprocessing
-num_examples: 1000
-max_len: 50
+num_examples: -1
+max_len: -1
 
 # tokenizer
 min_freq: -1

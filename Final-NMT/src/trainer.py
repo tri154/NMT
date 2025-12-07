@@ -35,8 +35,8 @@ class Trainer:
             batch_loss = self.loss_fn.compute_loss(batch_logits, batch_trg, trg_lengths)
 
             # DEBUG
-            # print(batch_loss)
-            # input("break")
+            print(batch_loss)
+            input("break")
             # DEBUG
 
             batch_loss.backward()
