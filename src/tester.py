@@ -3,8 +3,6 @@ import math
 import torch.nn.functional as F
 import torch.nn.utils.rnn as rnn
 from torch.utils.data import DataLoader
-from nltk.translate.bleu_score import sentence_bleu
-# from sacrebleu.metrics import BLEU
 import sacrebleu
 
 class Tester:

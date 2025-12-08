@@ -14,8 +14,8 @@ class CustomDataset(Dataset):
         return self.source[idx], self.value[idx]
 
     def collate_fn(self, batch, for_training):
-        # training: pad both src and trg
-        # otherwise: only pad src
+        # training: pad both src and trg, tokenize both src, trg.
+        # otherwise: only pad src, only tokenize src.
         pad = self.tokenizer.pad
         src, trg = list(), list()
         mlen_src = max([len(s) for s, t in batch])
