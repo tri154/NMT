@@ -12,9 +12,10 @@ class FeedForwardLayer(nn.Module):
         self.w1 = nn.Linear(self.d_model, self.d_ff)
         self.w2 = nn.Linear(self.d_ff, self.d_model)
         self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(cfg.dropout)
 
     def forward(self, batch_input):
-        return self.w2(self.relu(self.w1(batch_input)))
+        return self.w2(self.dropout(self.relu(self.w1(batch_input))))
 
 class MultiHeadAttention(nn.Module):
 
@@ -31,6 +32,9 @@ class MultiHeadAttention(nn.Module):
         self.wv = nn.Linear(self.d_model, self.d_model)
 
         self.scale = math.sqrt(self.d_model // self.n_heads)
+        self.dropout = nn.Dropout(cfg.dropout) if cfg.dropout != 0 else None
+
+        self.wo = nn.Linear(self.d_model, self.d_model)
 
     def forward(self, batch_input, lengths):
         Q = self.wq(batch_input)
@@ -45,18 +49,22 @@ class MultiHeadAttention(nn.Module):
 
         attention = torch.matmul(Q, K.permute(0, 1, 3, 2)) / self.scale
 
-        # masking there
-        # CONTINUE:
-        padding_mask = torch.arange(mlen).expand(bs, mlen) >= lengths.unsqueeze(-1)
+        padding_mask = torch.arange(mlen, device=self.device).expand(bs, mlen) >= lengths.unsqueeze(-1)
         padding_mask = padding_mask.unsqueeze(1).unsqueeze(2)
 
-        attn_mask = torch.zeros_like(padding_mask, dtype=torch.float32)
-        attn_mask = attn_mask.masked_fill(padding_mask, float("-inf"))
+        attention = attention.masked_fill(padding_mask, float("-inf"))
 
+        attention = torch.softmax(attention, dim=-1)
+        if self.dropout is not None:
+            attention = self.dropout(attention)
 
-        breakpoint()
+        out = torch.matmul(attention, V)
 
+        out = out.permute(0, 2, 1, 3).contiguous()
+        out = out.view(bs, mlen, self.d_model)
 
+        out = self.wo(out)
+        return out
 
 class EncoderLayer(nn.Module):
 
@@ -66,13 +74,15 @@ class EncoderLayer(nn.Module):
         self.ffn_ln = nn.LayerNorm(cfg.d_model)
         self.mha = MultiHeadAttention(cfg)
         self.mha_ln = nn.LayerNorm(cfg.d_model)
+        self.dropout = nn.Dropout(cfg.dropout)
+        self.dropout1 = nn.Dropout(cfg.dropout)
 
     def forward(self, batch_input, lengths):
-        x = self.mha(batch_input, lengths)
+        x = self.dropout(self.mha(batch_input, lengths))
         x = x + batch_input
         x = self.mha_ln(x)
 
-        x1 = self.ffn(x)
+        x1 = self.dropout1(self.ffn(x))
         x1 = x1 + x
         x1 = self.ffn_ln(x1)
 
@@ -85,7 +95,6 @@ class PositionalEncoding(nn.Module):
         super(PositionalEncoding, self).__init__()
 
     def forward(self, batch_input):
-        # TODO
         return batch_input
 
 class Encoder(nn.Module):
@@ -99,15 +108,14 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(vocab_size, cfg.d_model)
         self.pe = PositionalEncoding(cfg)
 
-        self.encoder_layers = nn.Sequential(
-            *[EncoderLayer(cfg) for _ in range(self.n_layers)]
+        self.encoder_layers = nn.ModuleList(
+            [EncoderLayer(cfg) for _ in range(self.n_layers)]
         )
 
     def forward(self, batch_input, lengths):
         embs = self.embedding(batch_input)
         embs = self.pe(embs)
 
-        for lid in range(self.n_layers):
-            embs = self.encoder_layers[lid](embs, lengths)
-
+        for layer in self.encoder_layers:
+            embs = layer(embs, lengths)
         return embs
