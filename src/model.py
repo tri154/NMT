@@ -20,11 +20,22 @@ class Model(nn.Module):
         padding_mask = padding_mask.unsqueeze(1).unsqueeze(2)
         return padding_mask
 
-    def create_decoder_mask():
-        pass
+    def create_decoder_mask(self, batch_trg):
+        bs, mlen = batch_trg.shape
+        mask = torch.triu(torch.ones(mlen, mlen, device=self.device), diagonal=1)
+        return mask.bool()
+
+    def decoder_teacher_forcing(self, batch_trg, enc_out):
+        decoder_mask = self.create_decoder_mask(batch_trg)
+        decoder_out = self.decoder(batch_trg, enc_out, decoder_mask)
+        # TODO
+        breakpoint()
 
     def forward(self, batch_src, batch_trg, is_training):
         encoder_mask = self.create_encoder_mask(batch_src)
         enc_out = self.encoder(batch_src, encoder_mask)
 
-        breakpoint()
+        if is_training:
+            self.decoder_teacher_forcing(batch_trg, enc_out)
+        else:
+            raise Exception("error")
