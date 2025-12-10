@@ -26,11 +26,9 @@ class MultiHeadAttention(nn.Module):
         K = self.wk(key)
         V = self.wv(value)
 
-        bs, mlen, _ = Q.shape
-
-        Q = Q.view(bs, mlen, self.n_heads, -1).permute(0, 2, 1, 3)
-        K = K.view(bs, mlen, self.n_heads, -1).permute(0, 2, 1, 3)
-        V = V.view(bs, mlen, self.n_heads, -1).permute(0, 2, 1, 3)
+        Q = Q.view(*Q.shape[:-1], self.n_heads, -1).permute(0, 2, 1, 3)
+        K = K.view(*K.shape[:-1], self.n_heads, -1).permute(0, 2, 1, 3)
+        V = V.view(*V.shape[:-1], self.n_heads, -1).permute(0, 2, 1, 3)
 
         attention = torch.matmul(Q, K.permute(0, 1, 3, 2)) / self.scale
 
@@ -45,7 +43,7 @@ class MultiHeadAttention(nn.Module):
         out = torch.matmul(attention, V)
 
         out = out.permute(0, 2, 1, 3).contiguous()
-        out = out.view(bs, mlen, self.d_model)
+        out = out.view(*out.shape[:2], self.d_model)
 
         out = self.wo(out)
         return out

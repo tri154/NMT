@@ -25,9 +25,9 @@ class Model(nn.Module):
         mask = torch.triu(torch.ones(mlen, mlen, device=self.device), diagonal=1)
         return mask.bool()
 
-    def decoder_teacher_forcing(self, batch_trg, enc_out):
+    def decoder_teacher_forcing(self, batch_trg, enc_out, encoder_mask):
         decoder_mask = self.create_decoder_mask(batch_trg)
-        decoder_out = self.decoder(batch_trg, enc_out, decoder_mask)
+        decoder_out = self.decoder(batch_trg, enc_out, encoder_mask, decoder_mask)
         # TODO
         breakpoint()
 
@@ -36,6 +36,6 @@ class Model(nn.Module):
         enc_out = self.encoder(batch_src, encoder_mask)
 
         if is_training:
-            self.decoder_teacher_forcing(batch_trg, enc_out)
+            self.decoder_teacher_forcing(batch_trg, enc_out, encoder_mask)
         else:
             raise Exception("error")

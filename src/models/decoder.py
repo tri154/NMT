@@ -21,19 +21,22 @@ class DecoderLayer(nn.Module):
 
         self.dropout = nn.Dropout(cfg.dropout)
         self.dropout1 = nn.Dropout(cfg.dropout)
+        self.dropout2 = nn.Dropout(cfg.dropout)
 
-    def forward(self, batch_input, enc_out, mask):
+    def forward(self, batch_input, enc_out, src_mask, trg_mask):
         x = self.ln(
-            batch_input + self.dropout(self.masked_mha(batch_input, batch_input, batch_input, mask))
+            batch_input + self.dropout(self.masked_mha(batch_input, batch_input, batch_input, trg_mask))
         )
 
-        breakpoint()
-        # CONTINUE: mask ? how to create
         x = self.ln1(
-            x + self.dropout1(self.mha(x, enc_out, enc_out))
+            x + self.dropout1(self.mha(x, enc_out, enc_out, src_mask))
         )
 
+        x = self.ln2(
+            x + self.dropout2(self.ffn(x))
+        )
 
+        return x
 
 
 class Decoder(nn.Module):
@@ -50,12 +53,10 @@ class Decoder(nn.Module):
             [DecoderLayer(cfg) for _ in range(cfg.n_decoder_layers)]
         )
 
-    def forward(self, batch_input, enc_out, mask):
+    def forward(self, batch_input, enc_out, src_mask, trg_mask):
         x = self.embedding(batch_input)
         x = self.pe(x)
 
         for layer in self.decoder_layers:
-            x = layer(x, enc_out, mask)
-        # ? add norm there forked
-        # x = LayerNorm(x)
+            x = layer(x, enc_out, src_mask, trg_mask)
         return x
