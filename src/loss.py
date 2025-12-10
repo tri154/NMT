@@ -3,15 +3,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Loss:
-    def __init__(self, cfg):
+    def __init__(self, cfg, tokenizer):
         self.cfg = cfg
-        self.cross_entropy = nn.CrossEntropyLoss()
+        self.cross_entropy = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_id)
 
-    def compute_loss(self, logits, labels, lengths):
+    def compute_loss(self, logits, labels):
         # tackle padding.
-        bs, mlen = labels.shape
-        mask = torch.arange(mlen).expand((bs, mlen)) < lengths.unsqueeze(-1)
-        logits = logits[mask]
-        labels = labels[mask]
-        loss = self.cross_entropy(logits, labels)
+        bs, mlen, vocab_size = logits.shape
+        loss = self.cross_entropy(
+            logits.view(-1, vocab_size),
+            labels.view(-1)
+        )
+
         return loss

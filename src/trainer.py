@@ -27,18 +27,18 @@ class Trainer:
         self.opt.zero_grad()
 
         total_loss = 0.0
+
         for idx_batch, (batch_src, batch_trg) in enumerate(train_dataloader):
             batch_src = batch_src.to(device)
             batch_trg = batch_trg.to(device)
             self.opt.zero_grad()
-            batch_logits, trg_lengths = self.model(batch_src, batch_trg, is_training=True)
-            batch_loss = self.loss_fn.compute_loss(batch_logits, batch_trg, trg_lengths)
+            batch_logits = self.model(batch_src, trg_teacher=batch_trg[:, :-1])
+            batch_loss = self.loss_fn.compute_loss(batch_logits, batch_trg[:, 1:].contiguous())
 
             # DEBUG
             print(batch_loss)
             input("break")
             # DEBUG
-
             batch_loss.backward()
 
             is_updated = True
