@@ -20,7 +20,10 @@ num_warmups: 0.06
 
 # inference
 max_len_trg: 50
-test_batch_size: 64
+test_batch_size: 4
+#beam
+beam_size: 3
+beam_max_length: 20
 
 # model
 dropout: 0.1

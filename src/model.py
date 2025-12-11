@@ -10,6 +10,7 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.cfg = cfg
         self.pad_id = tokenizer.pad_id
+        self.unk_id = tokenizer.unk_id
         self.sos_id = tokenizer.sos_id
         self.eos_id = tokenizer.eos_id
         self.device = cfg.device
@@ -41,18 +42,57 @@ class Model(nn.Module):
         logits = self.fc(decoder_out)
         return logits
 
+    def __beam_search_first_step(self, enc_out, encoder_mask, beam_size):
+        bs, mlen, d_model = enc_out.shape
 
-    def decoder_beam_search_abc(self, enc_out, encoder_mask):
+        batch_trg = torch.full((bs, 1), self.sos_id, device=self.device, dtype=torch.long)
+        decoder_mask = None
+
+        decoder_out = self.decoder(batch_trg, enc_out, encoder_mask, decoder_mask)
+        decoder_out = decoder_out[:, -1, :]
+        logits = self.fc(decoder_out)
+
+        blocking_list = torch.tensor([
+            self.pad_id,
+            self.unk_id,
+            self.sos_id,
+            self.eos_id
+        ], device=self.device)
+        logits[..., blocking_list] = float("-inf")
+
+        log_probs = torch.log_softmax(logits, dim=-1)
+        top_scores, top_indices = torch.topk(log_probs, beam_size, dim=-1)
+
+        scores = top_scores.view((bs * beam_size, 1))
+        sequences = top_indices.view((bs * beam_size, 1))
+        sequences = torch.cat([
+            torch.full((bs * beam_size, 1), self.sos_id, device=self.device, dtype=torch.long),
+            sequences
+        ], dim=-1)
+
+        return scores, sequences
+
+    def decoder_beam_search(self, enc_out, encoder_mask):
+        print("hello beam search")
         beam_size = self.cfg.beam_size
         beam_max_len = self.cfg.beam_max_length
-
         bs, mlen, d_model = enc_out.shape
-        batch_trg = torch.ones((bs, 1), device=self.device, dtype=int) * self.sos_id
-        decoder_mask = None
+
+        scores, sequences = self.__beam_search_first_step(enc_out, encoder_mask, beam_size)
+        breakpoint()
+
+        for i in range(2, beam_max_len):
+            self.decoder()
+
+
+        breakpoint()
+
+
+
         for i in range(beam_max_len):
             decoder_out = self.decoder(batch_trg, enc_out, encoder_mask, decoder_mask)
-            decoder_out = decoder_out[:, -1]
-            logits = torch.softmax(self.fc(decoder_out), dim=-1)
+            decoder_out = decoder_out[:, -1, :]
+            log_probs = torch.log_softmax(self.fc(decoder_out), dim=-1)
             breakpoint()
 
 
@@ -66,7 +106,7 @@ class Model(nn.Module):
 
 
 
-    def decoder_beam_search(self, enc_out, encoder_mask):
+    def decoder_beam_search_old(self, enc_out, encoder_mask):
         beam_size = self.cfg.beam_size
         beam_max_len = self.cfg.beam_max_length
         pad_id = self.pad_id
@@ -166,6 +206,6 @@ class Model(nn.Module):
         if trg_teacher is not None:
             out = self.decoder_teacher_forcing(trg_teacher, enc_out, encoder_mask)
         else:
-            raise Exception("erorr")
+            # raise Exception("erorr")
             out = self.decoder_beam_search(enc_out, encoder_mask)
         return out
