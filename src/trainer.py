@@ -47,7 +47,7 @@ class Trainer:
             is_evaluated = is_evaluated or (self.cfg.eval_freq > 0 and idx_batch % self.cfg.eval_freq == 0 and idx_batch != 0)
 
             if is_updated:
-                clip_grad_norm_(self.model.parameters(), self.cfg.max_grad_norm)
+                # clip_grad_norm_(self.model.parameters(), self.cfg.max_grad_norm)
                 self.opt.step()
                 self.opt.zero_grad()
                 self.sched.step()
