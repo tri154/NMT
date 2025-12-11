@@ -43,7 +43,8 @@ class Trainer:
             batch_loss.backward()
 
             is_updated = True
-            is_evaluated = idx_batch == len(train_dataloader) - 1 or (idx_batch % self.cfg.eval_freq == 0 and idx_batch != 0)
+            is_evaluated = idx_batch == len(train_dataloader) - 1
+            is_evaluated = is_evaluated or (self.cfg.eval_freq > 0 and idx_batch % self.cfg.eval_freq == 0 and idx_batch != 0)
 
             if is_updated:
                 clip_grad_norm_(self.model.parameters(), self.cfg.max_grad_norm)
