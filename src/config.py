@@ -66,13 +66,12 @@ class Config:
         torch.use_deterministic_algorithms(True, warn_only=True)
 
     def logging(self, text, is_printed=False, print_time=False):
+        if print_time:
+            text = time.strftime("%Y %b %d %a, %H:%M:%S: ") + text
         if is_printed:
             print(text)
         with open(self.log_path, 'a') as file:
-            if print_time:
-                print(time.strftime("%Y %b %d %a, %H:%M:%S: ") + text, file=file, flush=True)
-            else:
-                print(text, file=file, flush=True)
+            print(text, file=file, flush=True)
 
     def log_config(self, is_printed=False):
         self.logging("Configuration Settings:", is_printed=is_printed)
