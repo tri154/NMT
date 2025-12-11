@@ -110,7 +110,12 @@ class Tokenizer:
         res = list()
         fn = np.vectorize(self.trg_id2token.get)
         for sent in data:
-            sent = fn(np.array(sent))
+            sent = np.array(sent)
+            if sent[0] == self.sos_id:
+                sent = sent[1:]
+            if sent[-1] == self.eos_id:
+                sent = sent[:-1]
+            sent = fn(sent)
             sent = sent[1:-1].tolist()
             sent = " ".join(sent)
             res.append(sent)
