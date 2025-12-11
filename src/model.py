@@ -135,13 +135,13 @@ class Model(nn.Module):
             finished = finished | (selected_tokens == self.eos_id)
 
             # DEBUG
-            after_enc_out = enc_out[selected_seqs]
-            assert (after_enc_out == enc_out).all()
-            enc_out = after_enc_out
-            if encoder_mask is not None:
-                after_encoder_mask = encoder_mask[selected_seqs]
-                assert (after_encoder_mask == encoder_mask).all()
-                encoder_mask = after_encoder_mask
+            # after_enc_out = enc_out[selected_seqs]
+            # assert (after_enc_out == enc_out).all()
+            # enc_out = after_enc_out
+            # if encoder_mask is not None:
+            #     after_encoder_mask = encoder_mask[selected_seqs]
+            #     assert (after_encoder_mask == encoder_mask).all()
+            #     encoder_mask = after_encoder_mask
             # DEBUG
 
             if finished.all():
