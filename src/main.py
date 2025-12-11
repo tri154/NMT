@@ -16,9 +16,6 @@ def run_training(cfg):
     model = Model(cfg, tokenizer).to(cfg.device)
     loss_fn = Loss(cfg, tokenizer)
     tester = Tester(cfg, dev_set, test_set)
-
-    # t_score  = tester.test(model, tokenizer, tag='test', batch_size=cfg.test_batch_size)
-    # ==================
     trainer = Trainer(cfg, model, tokenizer, tester=tester, train_set=train_set, loss_fn=loss_fn)
     trainer = trainer.train(cfg.num_epochs, cfg.train_batch_size)
 

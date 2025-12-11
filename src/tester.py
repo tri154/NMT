@@ -9,7 +9,7 @@ class Tester:
         self.test_set = test_set
 
     def cal_score(self, preds, labels):
-        return sacrebleu.corpus_bleu(preds, [labels])
+        return sacrebleu.corpus_bleu(preds, [labels]).score
 
     def test(self, model, tokenizer, tag, batch_size):
         assert tag in ["dev", "test"]
@@ -35,8 +35,6 @@ class Tester:
                 batch_preds = model(batch_src)
                 preds.extend(batch_preds)
                 labels.extend(batch_trg)
-                # break
         preds = tokenizer.detokenize(preds)
-        # breakpoint()
         score = self.cal_score(preds, labels)
         return score

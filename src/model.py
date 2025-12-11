@@ -21,6 +21,7 @@ class Model(nn.Module):
         self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab), bias=False)
         self.fc.weight = self.decoder.embedding.weight
 
+
     def create_encoder_mask(self, batch_src):
         bs, mlen = batch_src.shape
         src_lengths = (batch_src != self.pad_id).to(int).sum(dim=1)
@@ -41,6 +42,7 @@ class Model(nn.Module):
 
         logits = self.fc(decoder_out)
         return logits
+
 
     def __beam_search_first_step(self, enc_out, encoder_mask, beam_size):
         bs, mlen, d_model = enc_out.shape
@@ -72,131 +74,86 @@ class Model(nn.Module):
 
         return scores, sequences
 
+
     def decoder_beam_search(self, enc_out, encoder_mask):
-        print("hello beam search")
         beam_size = self.cfg.beam_size
         beam_max_len = self.cfg.beam_max_length
         bs, mlen, d_model = enc_out.shape
 
         scores, sequences = self.__beam_search_first_step(enc_out, encoder_mask, beam_size)
-        breakpoint()
+        seqs_len= torch.ones(bs * beam_size, device=self.device).unsqueeze(1)
+        finished = torch.zeros(bs * beam_size, dtype=bool, device=self.device)
 
-        for i in range(2, beam_max_len):
-            self.decoder()
-
-
-        breakpoint()
-
-
-
-        for i in range(beam_max_len):
-            decoder_out = self.decoder(batch_trg, enc_out, encoder_mask, decoder_mask)
-            decoder_out = decoder_out[:, -1, :]
-            log_probs = torch.log_softmax(self.fc(decoder_out), dim=-1)
-            breakpoint()
-
-
-
-        breakpoint()
-
-
-
-
-
-
-
-
-    def decoder_beam_search_old(self, enc_out, encoder_mask):
-        beam_size = self.cfg.beam_size
-        beam_max_len = self.cfg.beam_max_length
-        pad_id = self.pad_id
-        sos_id = self.sos_id
-        eos_id = self.eos_id
-
-        bs, src_len, d_model = enc_out.shape
-        vocab_size = self.fc.out_features
-
-        # ---- Repeat encoder outputs for each beam ----
         enc_out = enc_out.unsqueeze(1).repeat(1, beam_size, 1, 1)
-        enc_out = enc_out.view(bs * beam_size, src_len, d_model)
+        enc_out = enc_out.view(bs * beam_size, *enc_out.shape[2:])
+        encoder_mask = encoder_mask.unsqueeze(1).repeat(1, beam_size, 1, 1, 1)
+        encoder_mask = encoder_mask.view(bs * beam_size, *encoder_mask.shape[2:])
 
-        if encoder_mask is not None:
-            encoder_mask = encoder_mask.unsqueeze(1).repeat(1, beam_size, 1, 1, 1)
-            encoder_mask = encoder_mask.view(bs * beam_size, *encoder_mask.shape[2:])
+        blocking_list = torch.tensor([self.pad_id, self.unk_id, self.sos_id], device=self.device, dtype=torch.long)
+        for len in range(2, beam_max_len):
+            decoder_mask = self.create_decoder_mask(sequences)
+            decoder_out = self.decoder(sequences, enc_out, encoder_mask, decoder_mask)
 
-        # ---- Initialize beams ----
-        sequences = torch.full((bs * beam_size, 1), sos_id, dtype=torch.long, device=self.device)
-        scores = torch.zeros(bs * beam_size, device=self.device)
-        finished = torch.zeros(bs * beam_size, dtype=torch.bool, device=self.device)
+            decoder_out = decoder_out[:, -1]
+            logits = self.fc(decoder_out)
+            logits[..., blocking_list] = float("-inf")
 
-        for t in range(beam_max_len):
+            log_probs = torch.log_softmax(logits, dim=-1)
 
-            # Decoder forward
-            decoder_out = self.decoder(sequences, enc_out, encoder_mask, None)
-            step_out = decoder_out[:, -1, :]                            # [bs*beam, d_model]
-            logits = self.fc(step_out)                                  # [bs*beam, vocab]
-            log_probs = F.log_softmax(logits, dim=-1)                   # more stable
+            if finished.any():
+                log_probs[finished] = 1e-9
+                log_probs[finished, self.pad_id] = 0
 
-            # ---- Mask finished beams so they only generate PAD ----
-            log_probs[finished] = -1e9
-            log_probs[finished, pad_id] = 0
+            seqs_len[~finished] += 1
+            vocab_size = log_probs.shape[-1]
 
-            # ---- Add previous beam scores ----
-            total_scores = log_probs + scores.unsqueeze(1)              # [bs*beam, vocab]
-
-            # ---- Reshape per batch ----
+            total_scores = (log_probs + scores) / seqs_len # normalized in case finished.
             total_scores = total_scores.view(bs, beam_size * vocab_size)
-
-            # ---- Select top-k ----
             top_scores, top_indices = torch.topk(total_scores, beam_size, dim=-1)
 
-            # Get beam + token indices
-            beam_indices = top_indices // vocab_size
-            token_indices = top_indices % vocab_size
+            # update selected sequences
+            selected_seqs = top_indices // vocab_size
+            offsets = torch.arange(bs, device=self.device).unsqueeze(1) * beam_size
+            selected_seqs = (selected_seqs + offsets).view(-1)
+            sequences = sequences[selected_seqs]
 
-            # ---- Reorder sequences & states ----
-            offset = (torch.arange(bs, device=self.device) * beam_size).unsqueeze(1)
-            flat_beam_idx = (beam_indices + offset).view(-1)
+            # update seqs_len (should be updated before scores)
+            seqs_len = seqs_len[selected_seqs]
 
-            sequences = sequences[flat_beam_idx]
-            enc_out = enc_out[flat_beam_idx]
+            # update scores (unormalized)
+            scores = top_scores.view(-1, 1) * seqs_len
+
+            # update selected tokens
+            selected_tokens = top_indices % vocab_size
+            selected_tokens = selected_tokens.view(-1)
+
+            # update new sequences
+            sequences = torch.cat([sequences, selected_tokens.unsqueeze(1)], dim=-1)
+
+            # update finished
+            finished = finished[selected_seqs]
+            finished = finished | (selected_tokens == self.eos_id)
+
+            # DEBUG
+            after_enc_out = enc_out[selected_seqs]
+            assert (after_enc_out == enc_out).all()
+            enc_out = after_enc_out
             if encoder_mask is not None:
-                encoder_mask = encoder_mask[flat_beam_idx]
+                after_encoder_mask = encoder_mask[selected_seqs]
+                assert (after_encoder_mask == encoder_mask).all()
+                encoder_mask = after_encoder_mask
+            # DEBUG
 
-            # ---- Append new tokens ----
-            sequences = torch.cat([sequences, token_indices.view(bs * beam_size, 1)], dim=-1)
-            scores = top_scores.view(-1)
-
-            # ---- Mark finished beams ----
-            finished = finished[flat_beam_idx]
-            finished |= (token_indices.view(-1) == eos_id)
-
-            # ---- Early stop if all finished ----
             if finished.all():
                 break
 
-        # ---- Pick best beam per batch ----
         sequences = sequences.view(bs, beam_size, -1)
         scores = scores.view(bs, beam_size)
 
-        best_idx = scores.argmax(dim=-1)  # [bs]
+        best_idx = scores.argmax(dim=-1)
         best_sequences = sequences[torch.arange(bs), best_idx]
 
         return best_sequences
-
-
-
-
-
-
-
-
-
-
-
-
-    def decoder_greedy_search(self, enc_out, encoder_mask):
-        breakpoint()
 
 
     def forward(self, batch_src, trg_teacher=None):
@@ -206,6 +163,5 @@ class Model(nn.Module):
         if trg_teacher is not None:
             out = self.decoder_teacher_forcing(trg_teacher, enc_out, encoder_mask)
         else:
-            # raise Exception("erorr")
             out = self.decoder_beam_search(enc_out, encoder_mask)
         return out
