@@ -18,7 +18,8 @@ num_epochs: 1
 train_batch_size: 32
 max_grad_norm: 1.0
 num_warmups: 0.06
-eval_freq: 200 # every $ batchs
+eval_freq: -1 # every $ batchs
+print_freq: 200
 
 # inference
 max_len_trg: 50

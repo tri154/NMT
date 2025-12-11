@@ -54,10 +54,13 @@ class Trainer:
 
             if is_evaluated:
                 d_score = self.tester.test(self.model, self.tokenizer, tag='dev', batch_size=self.cfg.test_batch_size)
-                self.cfg.logging(f"batch id: {idx_batch}, Dev result : {d_score}", is_printed=True)
+                self.cfg.logging(f"batch id: {idx_batch}, Dev result : {d_score}", is_printed=True, print_time=True)
                 if d_score.score > self.best_score_dev:
                     self.best_score_dev = d_score.score
                     torch.save(self.model.state_dict(), self.cfg.save_path)
+
+            if idx_batch % self.cfg.print_freq == 0:
+                self.cfg.logging(f"batch id: {idx_batch}, total_loss : {total_loss}", is_printed=True, print_time=True)
 
             total_loss += batch_loss.item()
 
