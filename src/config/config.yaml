@@ -6,10 +6,11 @@ data_dir: ../data
 
 # preprocessing
 num_examples: -1
-max_len: -1
+train_max_len: 50
+lowercase: false
 
 # tokenizer
-min_freq: -1
+min_freq: 5
 
 # training
 lr: !!float 1e-3

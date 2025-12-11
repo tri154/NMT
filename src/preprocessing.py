@@ -38,16 +38,18 @@ class Prepocessing:
         self.cfg.logging(log, is_printed=True)
 
     def __clean_text(self, s):
+        lowercase = self.cfg.lowercase
         s = str(s)
         s = html.unescape(s)
         s = re.sub(r"<[^>]+>", " ", s)
         s = "".join(ch for ch in s if not unicodedata.category(ch).startswith("P"))
-        s = s.lower()
+        if lowercase:
+            s = s.lower()
         s = re.sub(r"\s+", " ", s).strip()
         return s
 
-    def __load_data(self, src, trg):
-        max_len = self.cfg.max_len
+    def __load_data(self, src, trg, filter=False):
+        max_len = self.cfg.train_max_len
         num_examples = self.cfg.num_examples
 
         src_sents = open(src, "r").readlines()
@@ -58,9 +60,9 @@ class Prepocessing:
         for s, t in zip(src_sents, trg_sents):
             s = self.__clean_text(s)
             t = self.__clean_text(t)
-            cond = max_len < 0
-            cond = cond or (len(s.split()) <= max_len and len(t.split()) <= max_len)
-            if cond:
+            not_drop = max_len < 0
+            not_drop = not_drop or (len(s.split()) <= max_len and len(t.split()) <= max_len)
+            if not_drop or not filter:
                 res_src.append(s)
                 res_trg.append(t)
         if num_examples > 0:
@@ -82,7 +84,8 @@ class Prepocessing:
         res = dict()
         for key, value in self.cfg.files.items():
             src, target = value
-            res[key] = self.__load_data(src, target)
+            filter = key == "train"
+            res[key] = self.__load_data(src, target, filter)
 
         src_tuple, trg_tuple = self.__build_vocab(res['train'])
 
