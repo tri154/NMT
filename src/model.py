@@ -44,7 +44,7 @@ class Model(nn.Module):
         return logits
 
 
-    def __beam_search_first_step(self, enc_out, encoder_mask, beam_size):
+    def __beam_search_first_step(self, enc_out, encoder_mask, beam_size, beam_max_len):
         bs, mlen, d_model = enc_out.shape
 
         batch_trg = torch.full((bs, 1), self.sos_id, device=self.device, dtype=torch.long)
@@ -66,13 +66,12 @@ class Model(nn.Module):
         top_scores, top_indices = torch.topk(log_probs, beam_size, dim=-1)
 
         scores = top_scores.view((bs * beam_size, 1))
-        sequences = top_indices.view((bs * beam_size, 1))
-        sequences = torch.cat([
-            torch.full((bs * beam_size, 1), self.sos_id, device=self.device, dtype=torch.long),
-            sequences
-        ], dim=-1)
+        sequences = top_indices.view((bs * beam_size))
+        full_sequences = torch.full((bs * beam_size, beam_max_len), self.pad_id, device=self.device, dtype=torch.long)
+        full_sequences[:, 0] = self.sos_id
+        full_sequences[:, 1] = sequences
 
-        return scores, sequences
+        return scores, full_sequences
 
 
     def decoder_beam_search(self, enc_out, encoder_mask):
@@ -80,7 +79,7 @@ class Model(nn.Module):
         beam_max_len = self.cfg.beam_max_length
         bs, mlen, d_model = enc_out.shape
 
-        scores, sequences = self.__beam_search_first_step(enc_out, encoder_mask, beam_size)
+        scores, full_sequences = self.__beam_search_first_step(enc_out, encoder_mask, beam_size, beam_max_len)
         seqs_len= torch.ones(bs * beam_size, device=self.device).unsqueeze(1)
         finished = torch.zeros(bs * beam_size, dtype=bool, device=self.device)
 
@@ -91,6 +90,7 @@ class Model(nn.Module):
 
         blocking_list = torch.tensor([self.pad_id, self.unk_id, self.sos_id], device=self.device, dtype=torch.long)
         for len in range(2, beam_max_len):
+            sequences = full_sequences[:, :len]
             decoder_mask = self.create_decoder_mask(sequences)
             decoder_out = self.decoder(sequences, enc_out, encoder_mask, decoder_mask)
 
@@ -128,30 +128,20 @@ class Model(nn.Module):
             selected_tokens = selected_tokens.view(-1)
 
             # update new sequences
-            sequences = torch.cat([sequences, selected_tokens.unsqueeze(1)], dim=-1)
+            full_sequences[:, len] = selected_tokens
 
             # update finished
             finished = finished[selected_seqs]
             finished = finished | (selected_tokens == self.eos_id)
 
-            # DEBUG
-            # after_enc_out = enc_out[selected_seqs]
-            # assert (after_enc_out == enc_out).all()
-            # enc_out = after_enc_out
-            # if encoder_mask is not None:
-            #     after_encoder_mask = encoder_mask[selected_seqs]
-            #     assert (after_encoder_mask == encoder_mask).all()
-            #     encoder_mask = after_encoder_mask
-            # DEBUG
-
             if finished.all():
                 break
 
-        sequences = sequences.view(bs, beam_size, -1)
+        full_sequences = full_sequences.view(bs, beam_size, -1)
         scores = scores.view(bs, beam_size)
 
         best_idx = scores.argmax(dim=-1)
-        best_sequences = sequences[torch.arange(bs), best_idx]
+        best_sequences = full_sequences[torch.arange(bs, device=self.device), best_idx]
 
         return best_sequences
 
