@@ -1,7 +1,8 @@
 from collections import Counter
 import numpy as np
 from tqdm import tqdm
-class Tokenizer:
+
+class WordTokenizer:
     def __init__(self, cfg):
         self.cfg = cfg
         self.pad = "<pad>"

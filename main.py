@@ -1,8 +1,8 @@
-from common import Config, CustomDataset, Loss, Prepocessing, Tester, Trainer, Tokenizer
+from common import Config, CustomDataset, Loss, Prepocessing, Tester, Trainer, WordTokenizer
 from transformer import Model
 
 def run_training(cfg):
-    tokenizer = Tokenizer(cfg)
+    tokenizer = WordTokenizer(cfg)
     pre = Prepocessing(cfg, tokenizer)
     train_set = CustomDataset(cfg, pre.train_set, tokenizer)
     dev_set = CustomDataset(cfg, pre.dev_set, tokenizer)
