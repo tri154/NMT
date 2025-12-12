@@ -77,16 +77,11 @@ class WordTokenizer(Tokenizer):
         return data
 
     def detokenize(self, data):
-        res = list()
+        res = []
         fn = np.vectorize(self.trg_id2token.get)
         for sent in data:
             sent = sent.cpu().numpy()
-            if sent[0] == self.sos_id:
-                sent = sent[1:]
-            if sent[-1] == self.eos_id:
-                sent = sent[:-1]
-            sent = fn(sent)
-            sent = sent[1:-1].tolist()
-            sent = " ".join(sent)
-            res.append(sent)
+            tokens = fn(sent).tolist()
+            tokens = [tok for tok in tokens if tok not in self.additional_tokens]
+            res.append(" ".join(tokens))
         return res
