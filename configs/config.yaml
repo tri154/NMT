@@ -21,7 +21,6 @@ eval_freq: -1 # every $ batchs
 print_freq: 200
 
 # inference
-max_len_trg: 50
 test_batch_size: 4
 #beam
 beam_size: 3
