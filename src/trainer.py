@@ -76,7 +76,7 @@ class Trainer:
 
         self.opt, self.sched = self.prepare_optimizer_scheduler(train_dataloader)
 
-        self.best_score_dev = 0
+        self.best_score_dev = -1
         for idx_epoch in range(num_epoches):
             self.cfg.logging(f'epoch {idx_epoch + 1}/{num_epoches} ' + '=' * 100, is_printed=True)
 
