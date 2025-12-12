@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from torch.utils.data import DataLoader
 import sacrebleu
 
@@ -10,6 +11,12 @@ class Tester:
 
     def cal_score(self, preds, labels):
         return sacrebleu.corpus_bleu(preds, [labels]).score
+
+    def example(self, preds, labels):
+        N = len(preds)
+        random_int = np.random.randint(0, N)
+        text = f"Prediction: {preds[random_int]} \nTarget: {labels[random_int]} ."
+        self.cfg.logging(text, is_printed=True)
 
     def test(self, model, tokenizer, tag, batch_size):
         assert tag in ["dev", "test"]
@@ -36,5 +43,6 @@ class Tester:
                 preds.extend(batch_preds)
                 labels.extend(batch_trg)
         preds = tokenizer.detokenize(preds)
+        self.example(preds, labels)
         score = self.cal_score(preds, labels)
         return score
