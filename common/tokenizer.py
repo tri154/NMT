@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-import tqdm
+from tqdm import tqdm
 
 class Tokenizer(ABC):
 
@@ -42,6 +42,7 @@ class Tokenizer(ABC):
         vocab: np.array
         return list or list[list]
         """
+        pass
 
 
     @abstractmethod
@@ -54,18 +55,7 @@ class Tokenizer(ABC):
 
         return list[list[str]]
         """
-        if tag == "source":
-            vocab = self.src_vocab
-        elif tag == "target":
-            vocab = self.trg_vocab
-        else:
-            raise Exception("Invalid tag.")
-
-        res = list()
-        for s in tqdm(data):
-            temp = self.tokenize(s, vocab)
-            res.append(temp)
-        return res
+        pass
 
 
     @abstractmethod
@@ -74,22 +64,34 @@ class Tokenizer(ABC):
         data: list[str]
         tag: str, 'source' or 'target' save place.
 
-        build vocab, use __build_addition to build additional data.
+        build vocab, use build_addition to build additional data.
 
         return {"vocab": vocab,
                 "token2id": token2id,
                 "id2token": id2token}
         """
+        pass
 
 
-    # @abstractmethod
-    # def detokenize(self, ):
+    @abstractmethod
+    def detokenize(self, data):
+        """
+        data: list[list[int]]
+        return list[str]
+        """
+        pass
+
+    @abstractmethod
+    def token2ids(self, data, tag):
+        """
+        data: list[list[str]]
+        tag: str 'source' or 'target', vocab to use
+        return list[list[int]]
+        """
 
 
 
-
-
-    def __build_addition(self, tag):
+    def build_addition(self, tag):
         if tag == "source":
             if self.src_token2id is None:
                 self.src_token2id = {t: idx for idx, t in enumerate(self.src_vocab)}

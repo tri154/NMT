@@ -2,7 +2,6 @@ from collections import Counter
 import numpy as np
 from tqdm import tqdm
 from common import Tokenizer
-import tqdm
 
 class WordTokenizer(Tokenizer):
     def __init__(self, cfg):
@@ -63,24 +62,10 @@ class WordTokenizer(Tokenizer):
         else:
             raise Exception("Invalid tag.")
 
-        token2id, id2token = self.__build_addition(tag)
+        token2id, id2token = self.build_addition(tag)
         return {"vocab": vocab,
                 "token2id": token2id,
                 "id2token": id2token}
-
-    # def __build_addition(self, tag):
-    #     if tag == "source":
-    #         if self.src_token2id is None:
-    #             self.src_token2id = {t: idx for idx, t in enumerate(self.src_vocab)}
-    #             self.src_id2token = {idx: t for idx, t in enumerate(self.src_vocab)}
-    #             return self.src_token2id, self.src_id2token
-    #     elif tag == "target":
-    #         if self.trg_token2id is None:
-    #             self.trg_token2id = {t: idx for idx, t in enumerate(self.trg_vocab)}
-    #             self.trg_id2token = {idx: t for idx, t in enumerate(self.trg_vocab)}
-    #             return self.trg_token2id, self.trg_id2token
-    #     else:
-    #         raise Exception("Invalid tag.")
 
     def token2ids(self, data, tag):
         assert tag in ["source", "target"]
