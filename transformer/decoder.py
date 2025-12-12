@@ -1,10 +1,8 @@
 import torch.nn as nn
-import torch
-import torch.nn.functional as F
 
-from models.mha import MultiHeadAttention
-from models.ffn import FeedForwardLayer
-from models.pe import PositionalEncoding
+from transformer import MultiHeadAttention
+from transformer import FeedForwardLayer
+from transformer import PositionalEncoding
 
 class DecoderLayer(nn.Module):
 

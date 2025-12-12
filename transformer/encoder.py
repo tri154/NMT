@@ -1,7 +1,7 @@
 import torch.nn as nn
-from models.pe import PositionalEncoding
-from models.mha import MultiHeadAttention
-from models.ffn import FeedForwardLayer
+from transformer import PositionalEncoding
+from transformer import MultiHeadAttention
+from transformer import FeedForwardLayer
 
 class EncoderLayer(nn.Module):
 

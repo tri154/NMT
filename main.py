@@ -1,11 +1,5 @@
-from config import Config
-from preprocessing import Prepocessing
-from dataset import CustomDataset
-from model import Model
-from trainer import Trainer
-from loss import Loss
-from tester import Tester
-from tokenizer import Tokenizer
+from common import Config, CustomDataset, Loss, Prepocessing, Tester, Trainer, Tokenizer
+from transformer import Model
 
 def run_training(cfg):
     tokenizer = Tokenizer(cfg)
@@ -20,5 +14,5 @@ def run_training(cfg):
     trainer = trainer.train(cfg.num_epochs, cfg.train_batch_size)
 
 if __name__ == "__main__":
-    cfg = Config("config/config.yaml")
+    cfg = Config("configs/config.yaml")
     run_training(cfg)

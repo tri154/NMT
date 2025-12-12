@@ -1,8 +1,4 @@
-from config import Config
-from preprocessing import Prepocessing
-from dataset import CustomDataset
-from tokenizer import Tokenizer
-
+from common import Config, Prepocessing, CustomDataset, Tokenizer
 from torch.utils.data import DataLoader
 
 def check_pe_max_len(dataloader, check_trg=False):
@@ -61,5 +57,5 @@ def run_training(cfg):
 
 
 if __name__ == "__main__":
-    cfg = Config("config/config.yaml")
+    cfg = Config("configs/config.yaml")
     run_training(cfg)

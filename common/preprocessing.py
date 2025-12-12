@@ -3,7 +3,6 @@ import re
 import unicodedata
 import os
 import dill as pk
-from tokenizer import Tokenizer
 
 class Prepocessing:
     def __init__(self, cfg, tokenizer):
@@ -21,6 +20,7 @@ class Prepocessing:
         self.dev_set = res['dev']
         self.test_set = res['test']
 
+        # trained tokenizer's data.
         self.src_addition = res["src_addition"]
         self.trg_addition = res["trg_addition"]
 
