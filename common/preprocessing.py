@@ -24,7 +24,7 @@ class Prepocessing:
         self.src_addition = res["src_addition"]
         self.trg_addition = res["trg_addition"]
 
-        self.tokenizer.assign(self.src_addition, self.trg_addition)
+        self.tokenizer.assign_addition(self.src_addition, self.trg_addition)
 
         # logging
         log = ""

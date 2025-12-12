@@ -1,15 +1,15 @@
 from collections import Counter
 import numpy as np
 from tqdm import tqdm
+from common import Tokenizer
+import tqdm
 
-class WordTokenizer:
+class WordTokenizer(Tokenizer):
     def __init__(self, cfg):
-        self.cfg = cfg
-        self.pad = "<pad>"
-        self.unk = "<unk>"
-        self.sos = "<sos>"
-        self.eos = "<eos>"
+        super().__init__(cfg)
+        self.prepare_special_tokens()
 
+    def prepare_special_tokens(self):
         # additional tokens share the same id in src and trg.
         self.pad_id = 0
         self.unk_id = 1
@@ -18,22 +18,6 @@ class WordTokenizer:
 
         self.additional_tokens = [self.pad, self.unk, self.sos, self.eos]
         self.additional_ids = [self.pad_id, self.unk_id, self.sos_id, self.eos_id]
-
-        # assign later.
-        self.src_vocab = None
-        self.src_token2id = None
-        self.src_id2token = None
-
-        self.trg_vocab = None
-        self.trg_token2id = None
-        self.trg_id2token = None
-
-
-    def assign(self, src_addition, trg_addition):
-        for key, value in src_addition.items():
-            setattr(self, "src_" + key, value)
-        for key, value in trg_addition.items():
-            setattr(self, "trg_" + key, value)
 
     def tokenize(self, data):
         if isinstance(data, list):
@@ -84,19 +68,19 @@ class WordTokenizer:
                 "token2id": token2id,
                 "id2token": id2token}
 
-    def __build_addition(self, tag):
-        if tag == "source":
-            if self.src_token2id is None:
-                self.src_token2id = {t: idx for idx, t in enumerate(self.src_vocab)}
-                self.src_id2token = {idx: t for idx, t in enumerate(self.src_vocab)}
-                return self.src_token2id, self.src_id2token
-        elif tag == "target":
-            if self.trg_token2id is None:
-                self.trg_token2id = {t: idx for idx, t in enumerate(self.trg_vocab)}
-                self.trg_id2token = {idx: t for idx, t in enumerate(self.trg_vocab)}
-                return self.trg_token2id, self.trg_id2token
-        else:
-            raise Exception("Invalid tag.")
+    # def __build_addition(self, tag):
+    #     if tag == "source":
+    #         if self.src_token2id is None:
+    #             self.src_token2id = {t: idx for idx, t in enumerate(self.src_vocab)}
+    #             self.src_id2token = {idx: t for idx, t in enumerate(self.src_vocab)}
+    #             return self.src_token2id, self.src_id2token
+    #     elif tag == "target":
+    #         if self.trg_token2id is None:
+    #             self.trg_token2id = {t: idx for idx, t in enumerate(self.trg_vocab)}
+    #             self.trg_id2token = {idx: t for idx, t in enumerate(self.trg_vocab)}
+    #             return self.trg_token2id, self.trg_id2token
+    #     else:
+    #         raise Exception("Invalid tag.")
 
     def token2ids(self, data, tag):
         assert tag in ["source", "target"]
