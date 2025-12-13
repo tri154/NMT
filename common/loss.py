@@ -11,9 +11,9 @@ class Loss:
 
     def compute_loss(self, logits, labels):
         # return self.label_smoothing(logits, labels)
-        return self.cross_entropy(logits, labels)
+        return self.compute_cross_entropy(logits, labels)
 
-    def cross_entropy(self, logits, labels):
+    def compute_cross_entropy(self, logits, labels):
         # tackle padding.
         bs, mlen, vocab_size = logits.shape
         loss = self.cross_entropy(
