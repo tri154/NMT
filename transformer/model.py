@@ -100,7 +100,7 @@ class Model(nn.Module):
             log_probs = torch.log_softmax(logits, dim=-1)
 
             if finished.any():
-                log_probs[finished] = 1e-9
+                log_probs[finished] = - 1e-9
                 log_probs[finished, self.pad_id] = 0
 
             seqs_len[~finished] += 1
@@ -114,7 +114,7 @@ class Model(nn.Module):
             selected_seqs = top_indices // vocab_size
             offsets = torch.arange(bs, device=self.device).unsqueeze(1) * beam_size
             selected_seqs = (selected_seqs + offsets).view(-1)
-            sequences = sequences[selected_seqs]
+            full_sequences = full_sequences[selected_seqs]
 
             # update seqs_len (should be updated before scores)
             seqs_len = seqs_len[selected_seqs]
