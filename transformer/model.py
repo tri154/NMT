@@ -148,6 +148,36 @@ class Model(nn.Module):
 
         return best_sequences
 
+    def greedy_decode(self, enc_out, encoder_mask):
+        bs, enc_mlen, d_model = enc_out.shape
+        max_len = enc_mlen + self.cfg.beam_max_length
+        trg_indices = torch.full((bs, max_len), self.pad_id, device=self.device)
+        trg_indices[:, 0] = self.sos_id
+
+        finished = torch.zeros(bs, dtype=torch.bool, device=self.device)
+
+        for i in range(max_len - 1):
+            trg_input = trg_indices[:, :i+1]
+            trg_mask = self.create_decoder_mask(trg_input)
+
+            output = self.decoder(trg_input, enc_out, encoder_mask, trg_mask)
+
+            logits = self.fc(output[:, -1])
+            if finished.any():
+                logits[finished] = float("-inf")
+                logits[finished, self.pad_id] = 0
+
+            next_token = torch.argmax(logits, dim=-1)
+
+            trg_indices[:, i+1] = next_token
+
+            is_eos = next_token == self.eos_id
+            finished = finished | is_eos
+            if finished.all():
+                break
+
+        return trg_indices
+
 
     def forward(self, batch_src, trg_teacher=None):
         encoder_mask = self.create_encoder_mask(batch_src)
@@ -156,5 +186,6 @@ class Model(nn.Module):
         if trg_teacher is not None:
             out = self.decoder_teacher_forcing(trg_teacher, enc_out, encoder_mask)
         else:
-            out = self.decoder_beam_search(enc_out, encoder_mask)
+            # out = self.decoder_beam_search(enc_out, encoder_mask)
+            out = self.greedy_decode(enc_out, encoder_mask)
         return out
