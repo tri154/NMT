@@ -113,10 +113,8 @@ class Model(nn.Module):
             vocab_size = log_probs.shape[-1]
 
             total_scores = (log_probs + scores)
-            norm_factor = ((seqs_len + 5) / 6) ** self.cfg.length_penalty
-            norm_scores = total_scores / norm_factor
-            norm_scores = norm_scores.view(bs, beam_size * vocab_size)
-            top_scores, top_indices = torch.topk(norm_scores, beam_size, dim=-1)
+            total_scores = total_scores.view(bs, beam_size * vocab_size)
+            top_scores, top_indices = torch.topk(total_scores, beam_size, dim=-1)
 
             # update selected sequences
             selected_seqs = top_indices // vocab_size
