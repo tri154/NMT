@@ -79,7 +79,8 @@ class Trainer:
             batch_loss_item = batch_loss.item()
             tracking_loss += batch_loss_item
             total_loss += batch_loss_item
-            return total_loss / len(train_dataloader)
+
+        return total_loss / len(train_dataloader)
 
     def train(self, num_epoches, batch_size):
         train_collate_fn = lambda batch: self.train_set.collate_fn(batch, for_training=True)
