@@ -106,7 +106,8 @@ class Model(nn.Module):
             seqs_len[~finished] += 1
             vocab_size = log_probs.shape[-1]
 
-            total_scores = (log_probs + scores) / seqs_len # normalized in case finished.
+            norm_factor = ((seqs_len + 5) / 6) ** self.cfg.length_penalty
+            total_scores = (log_probs + scores) / norm_factor # normalized in case finished.
             total_scores = total_scores.view(bs, beam_size * vocab_size)
             top_scores, top_indices = torch.topk(total_scores, beam_size, dim=-1)
 
@@ -114,7 +115,7 @@ class Model(nn.Module):
             selected_seqs = top_indices // vocab_size
             offsets = torch.arange(bs, device=self.device).unsqueeze(1) * beam_size
             selected_seqs = (selected_seqs + offsets).view(-1)
-            full_sequences = full_sequences[selected_seqs]
+            full_sequences[:, :len] = full_sequences[selected_seqs, :len]
 
             # update seqs_len (should be updated before scores)
             seqs_len = seqs_len[selected_seqs]
@@ -137,7 +138,8 @@ class Model(nn.Module):
                 break
 
         full_sequences = full_sequences.view(bs, beam_size, -1)
-        scores = scores / seqs_len
+        norm_factor = ((seqs_len + 5) / 6) ** self.cfg.length_penalty
+        scores = scores / norm_factor
         scores = scores.view(bs, beam_size)
 
         best_idx = scores.argmax(dim=-1)
