@@ -13,22 +13,22 @@ lowercase: false
 min_freq: 5
 
 # training
-num_epochs: 20
-train_batch_size: 256
+num_epochs: 1
+train_batch_size: 32
 num_warmups: 0.04
 eval_freq: -1 # every $ batchs
 print_freq: 200
 # optimizer
-lr: !!float 1.0 # scheduler detemines lr
+lr: !!float 1.0 # scheduler determines lr
 opt_b1: 0.9
 opt_b2: 0.98
 opt_eps: !!float 1e-9
 
 # inference
-test_batch_size: 32
+test_batch_size: 4
 #beam
-beam_size: 5
-beam_max_length: 160 # should be smaller than pe_max_seq_len
+beam_size: 3
+beam_max_length: 20 # should be smaller than pe_max_seq_len
 
 # model
 dropout: 0.1

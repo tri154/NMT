@@ -1,7 +1,8 @@
 from torch.utils.data import DataLoader
-from transformers.optimization import get_linear_schedule_with_warmup
-from torch.optim import AdamW
+from torch.optim import Adam
 import torch
+from torch.optim.lr_scheduler import LambdaLR
+
 
 class Trainer:
     def __init__(self, cfg, model, tokenizer, tester, train_set, loss_fn):
@@ -13,11 +14,25 @@ class Trainer:
         self.loss_fn = loss_fn
 
     def prepare_optimizer_scheduler(self, train_dataloader):
-        opt = AdamW(self.model.parameters(), lr=self.cfg.lr)
+        opt = Adam(self.model.parameters(),
+                   lr=self.cfg.lr,
+                   betas=(self.cfg.opt_b1, self.cfg.opt_b2),
+                   eps=self.cfg.opt_eps
+        )
         # update every batch.
-        num_updates = len(train_dataloader) * self.cfg.num_epochs
-        num_warmups = int(num_updates * self.cfg.num_warmups)
-        sched = get_linear_schedule_with_warmup(opt, num_warmups, num_updates)
+        num_steps = len(train_dataloader) * self.cfg.num_epochs
+        num_warmups = int(num_steps * self.cfg.num_warmups)
+
+        d_model = self.cfg.d_model
+
+        def noam_lambda(step):
+            step = max(step, 1)
+            return (
+                d_model ** (-0.5)
+                * min(step ** (-0.5), step * num_warmups ** (-1.5))
+            )
+
+        sched = LambdaLR(opt, noam_lambda)
         return opt, sched
 
     def train_one_epoch(self, train_dataloader, current_epoch):
