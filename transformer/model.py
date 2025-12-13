@@ -137,6 +137,7 @@ class Model(nn.Module):
                 break
 
         full_sequences = full_sequences.view(bs, beam_size, -1)
+        scores = scores / seqs_len
         scores = scores.view(bs, beam_size)
 
         best_idx = scores.argmax(dim=-1)
