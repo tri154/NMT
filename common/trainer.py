@@ -39,6 +39,7 @@ class Trainer:
         device = self.cfg.device
 
         total_loss = 0.0
+        tracking_loss = 0.0
 
         for idx_batch, (batch_src, batch_trg) in enumerate(train_dataloader):
             batch_src = batch_src.to(device)
@@ -71,11 +72,14 @@ class Trainer:
                     self.best_score_dev = d_score
                     torch.save(self.model.state_dict(), self.cfg.save_path)
 
-            if idx_batch % self.cfg.print_freq == 0:
-                self.cfg.logging(f"batch id: {idx_batch}, batch loss: {total_loss / self.cfg.print_freq}", is_printed=True, print_time=True)
-                total_loss = 0.0
+            if idx_batch % self.cfg.print_freq == 0 and idx_batch != 0:
+                self.cfg.logging(f"batch id: {idx_batch}, batch loss: {tracking_loss/ self.cfg.print_freq}", is_printed=True, print_time=True)
+                tracking_loss = 0.0
 
-            total_loss += batch_loss.item()
+            batch_loss_item = batch_loss.item()
+            tracking_loss += batch_loss_item
+            total_loss += batch_loss_item
+            return total_loss / len(train_dataloader)
 
     def train(self, num_epoches, batch_size):
         train_collate_fn = lambda batch: self.train_set.collate_fn(batch, for_training=True)
@@ -91,9 +95,9 @@ class Trainer:
         for idx_epoch in range(num_epoches):
             self.cfg.logging(f'epoch {idx_epoch + 1}/{num_epoches} ' + '=' * 100, is_printed=True)
 
-            self.train_one_epoch(train_dataloader, idx_epoch)
+            epoch_loss = self.train_one_epoch(train_dataloader, idx_epoch)
 
-            # self.cfg.logging(f"epoch: {idx_epoch + 1}, loss={epoch_loss} .", is_printed=True)
+            self.cfg.logging(f"epoch: {idx_epoch + 1}, loss={epoch_loss} .", is_printed=True)
 
         self.model.load_state_dict(torch.load(self.cfg.save_path, map_location=self.cfg.device))
         t_score  = self.tester.test(self.model, self.tokenizer, tag='test', batch_size=self.cfg.test_batch_size)

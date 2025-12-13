@@ -86,10 +86,12 @@ class Model(nn.Module):
         seqs_len= torch.ones(bs * beam_size, device=self.device).unsqueeze(1)
         finished = torch.zeros(bs * beam_size, dtype=bool, device=self.device)
 
-        enc_out = enc_out.unsqueeze(1).repeat(1, beam_size, 1, 1)
-        enc_out = enc_out.view(bs * beam_size, *enc_out.shape[2:])
-        encoder_mask = encoder_mask.unsqueeze(1).repeat(1, beam_size, 1, 1, 1)
-        encoder_mask = encoder_mask.view(bs * beam_size, *encoder_mask.shape[2:])
+        enc_out = torch.repeat_interleave(enc_out, beam_size, 0)
+        encoder_mask = torch.repeat_interleave(encoder_mask, beam_size, 0)
+        # enc_out = enc_out.unsqueeze(1).repeat(1, beam_size, 1, 1)
+        # enc_out = enc_out.view(bs * beam_size, *enc_out.shape[2:])
+        # encoder_mask = encoder_mask.unsqueeze(1).repeat(1, beam_size, 1, 1, 1)
+        # encoder_mask = encoder_mask.view(bs * beam_size, *encoder_mask.shape[2:])
 
         blocking_list = torch.tensor([self.pad_id, self.unk_id, self.sos_id], device=self.device, dtype=torch.long)
         for len in range(2, beam_max_len):
