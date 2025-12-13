@@ -100,35 +100,35 @@ class Model(nn.Module):
             log_probs = torch.log_softmax(logits, dim=-1)
 
             if finished.any():
-                log_probs[finished] = - 1e9
+                log_probs[finished] = float("-inf")
                 log_probs[finished, self.pad_id] = 0
 
             seqs_len[~finished] += 1
             vocab_size = log_probs.shape[-1]
 
+            total_scores = (log_probs + scores)
             norm_factor = ((seqs_len + 5) / 6) ** self.cfg.length_penalty
-            total_scores = (log_probs + scores) / norm_factor # normalized in case finished.
-            total_scores = total_scores.view(bs, beam_size * vocab_size)
-            top_scores, top_indices = torch.topk(total_scores, beam_size, dim=-1)
+            norm_scores = total_scores / norm_factor
+            norm_scores = norm_scores.view(bs, beam_size * vocab_size)
+            top_scores, top_indices = torch.topk(norm_scores, beam_size, dim=-1)
 
             # update selected sequences
             selected_seqs = top_indices // vocab_size
             offsets = torch.arange(bs, device=self.device).unsqueeze(1) * beam_size
             selected_seqs = (selected_seqs + offsets).view(-1)
-            full_sequences[:, :len] = full_sequences[selected_seqs, :len]
 
-            # update seqs_len (should be updated before scores)
-            seqs_len = seqs_len[selected_seqs]
-
-            # update scores (unormalized)
-            scores = top_scores.view(-1, 1) * seqs_len
-
-            # update selected tokens
             selected_tokens = top_indices % vocab_size
             selected_tokens = selected_tokens.view(-1)
 
-            # update new sequences
+            # update selected tokens
+            full_sequences[:, :len] = full_sequences[selected_seqs, :len]
             full_sequences[:, len] = selected_tokens
+
+            # update scores (unormalized)
+            scores = torch.gather(total_scores.view(bs, -1), 1, top_indices).view(-1, 1)
+
+            # update seqs_len (should be updated before scores)
+            seqs_len = seqs_len[selected_seqs]
 
             # update finished
             finished = finished[selected_seqs]
