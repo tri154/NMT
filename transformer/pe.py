@@ -15,7 +15,7 @@ class PositionalEncoding(nn.Module):
         for pos in range(self.max_seq_len):
             for i in range(0, self.d_model, 2):
                 pe[pos, i] = math.sin(pos/(10000**(2*i/self.d_model)))
-                pe[pos, i+1] = math.cos(pos/(10000**((2*i+1)/self.d_model)))
+                pe[pos, i+1] = math.cos(pos/(10000**((2*i)/self.d_model)))
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
 
