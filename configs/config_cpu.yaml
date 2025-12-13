@@ -18,6 +18,8 @@ train_batch_size: 32
 num_warmups: 0.04
 eval_freq: -1 # every $ batchs
 print_freq: 200
+#loss
+label_smoothing: 0.1
 # optimizer
 lr: !!float 1.0 # scheduler determines lr
 opt_b1: 0.9
