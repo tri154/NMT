@@ -40,8 +40,9 @@ class Tester:
             batch_src = batch_src.to(device)
             with torch.no_grad():
                 batch_preds = model(batch_src)
-                preds.extend(batch_preds)
+                preds.append(batch_preds)
                 labels.extend(batch_trg)
+        preds = torch.concat(preds, dim=0).cpu().numpy()
         preds = tokenizer.detokenize(preds)
         self.example(preds, labels)
         score = self.cal_score(preds, labels)

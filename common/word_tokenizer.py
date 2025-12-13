@@ -77,11 +77,20 @@ class WordTokenizer(Tokenizer):
         return data
 
     def detokenize(self, data):
-        res = []
         fn = np.vectorize(self.trg_id2token.get)
-        for sent in data:
-            sent = sent.cpu().numpy()
-            tokens = fn(sent).tolist()
-            tokens = [tok for tok in tokens if tok not in self.additional_tokens]
-            res.append(" ".join(tokens))
-        return res
+        tokens = fn(data)
+        keep_mask = ~np.isin(data, np.array(self.additional_ids))
+
+
+        return [
+            " ".join(sent_token[mask])
+            for sent_token, mask in zip(tokens, keep_mask)
+        ]
+
+        # res = []
+        # for sent in data:
+        #     sent = sent.cpu().numpy()
+        #     tokens = fn(sent).tolist()
+        #     tokens = [tok for tok in tokens if tok not in self.additional_tokens]
+        #     res.append(" ".join(tokens))
+        # return res
