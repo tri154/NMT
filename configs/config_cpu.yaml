@@ -28,7 +28,7 @@ opt_eps: !!float 1e-9
 test_batch_size: 4
 #beam
 beam_size: 3
-beam_max_length: 20 # should be smaller than pe_max_seq_len
+beam_max_length: 10 # should be smaller than pe_max_seq_len
 
 # model
 dropout: 0.1

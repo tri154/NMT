@@ -75,8 +75,8 @@ class Model(nn.Module):
 
     def decoder_beam_search(self, enc_out, encoder_mask):
         beam_size = self.cfg.beam_size
-        beam_max_len = self.cfg.beam_max_length
-        bs, mlen, d_model = enc_out.shape
+        bs, enc_mlen, d_model = enc_out.shape
+        beam_max_len = enc_mlen + self.cfg.beam_max_length
 
         scores, full_sequences = self.__beam_search_first_step(enc_out, encoder_mask, beam_size, beam_max_len)
         seqs_len= torch.ones(bs * beam_size, device=self.device).unsqueeze(1)
