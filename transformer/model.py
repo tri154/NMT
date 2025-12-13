@@ -57,7 +57,7 @@ class Model(nn.Module):
             self.pad_id,
             self.unk_id,
             self.sos_id,
-            self.eos_id
+            # self.eos_id
         ], device=self.device)
         logits[..., blocking_list] = float("-inf")
 
