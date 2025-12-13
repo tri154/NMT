@@ -100,7 +100,7 @@ class Model(nn.Module):
             log_probs = torch.log_softmax(logits, dim=-1)
 
             if finished.any():
-                log_probs[finished] = - 1e-9
+                log_probs[finished] = - 1e9
                 log_probs[finished, self.pad_id] = 0
 
             seqs_len[~finished] += 1
