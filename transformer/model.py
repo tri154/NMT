@@ -18,8 +18,6 @@ class Model(nn.Module):
         self.decoder = Decoder(cfg, tokenizer)
 
         self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab))
-        # self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab), bias=False)
-        # self.fc.weight = self.decoder.embedding.weight
 
 
     def create_encoder_mask(self, batch_src):
@@ -89,10 +87,6 @@ class Model(nn.Module):
 
         enc_out = torch.repeat_interleave(enc_out, beam_size, 0)
         encoder_mask = torch.repeat_interleave(encoder_mask, beam_size, 0)
-        # enc_out = enc_out.unsqueeze(1).repeat(1, beam_size, 1, 1)
-        # enc_out = enc_out.view(bs * beam_size, *enc_out.shape[2:])
-        # encoder_mask = encoder_mask.unsqueeze(1).repeat(1, beam_size, 1, 1, 1)
-        # encoder_mask = encoder_mask.view(bs * beam_size, *encoder_mask.shape[2:])
 
         blocking_list = torch.tensor([self.pad_id, self.unk_id, self.sos_id], device=self.device, dtype=torch.long)
         for len in range(2, beam_max_len):
@@ -114,8 +108,10 @@ class Model(nn.Module):
             vocab_size = log_probs.shape[-1]
 
             total_scores = (log_probs + scores)
-            total_scores = total_scores.view(bs, beam_size * vocab_size)
-            top_scores, top_indices = torch.topk(total_scores, beam_size, dim=-1)
+            norm_factor = ((seqs_len + 5) / 6) ** self.cfg.length_penalty
+            norm_scores = total_scores / norm_factor
+            norm_scores = norm_scores.view(bs, beam_size * vocab_size)
+            top_scores, top_indices = torch.topk(norm_scores, beam_size, dim=-1)
 
             # update selected sequences
             selected_seqs = top_indices // vocab_size
@@ -132,7 +128,7 @@ class Model(nn.Module):
             # update scores (unormalized)
             scores = torch.gather(total_scores.view(bs, -1), 1, top_indices).view(-1, 1)
 
-            # update seqs_len (should be updated before scores)
+            # update seqs_len
             seqs_len = seqs_len[selected_seqs]
 
             # update finished

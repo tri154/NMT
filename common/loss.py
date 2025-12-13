@@ -4,7 +4,10 @@ import torch.nn as nn
 class Loss:
     def __init__(self, cfg, tokenizer):
         self.cfg = cfg
-        self.cross_entropy = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_id, label_smoothing=self.cfg.label_smoothing)
+        self.cross_entropy = nn.CrossEntropyLoss(
+            ignore_index=tokenizer.pad_id,
+            label_smoothing=self.cfg.label_smoothing
+        )
         self.vocab_size = len(tokenizer.trg_vocab)
         self.confidence = 1.0 - self.cfg.label_smoothing
         self.pad_id = tokenizer.pad_id
