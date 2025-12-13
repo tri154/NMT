@@ -32,7 +32,11 @@ class Model(nn.Module):
     def create_decoder_mask(self, batch_trg):
         bs, mlen = batch_trg.shape
         mask = torch.triu(torch.ones(mlen, mlen, device=self.device), diagonal=1)
-        return mask.bool().unsqueeze(0).unsqueeze(1)
+        # mask = mask.bool().unsqueeze(0).unsqueeze(1)
+        mask = mask.bool()
+        padding_mask = (batch_trg == self.pad_id).unsqueeze(1).unsqueeze(2)
+        mask = mask | padding_mask
+        return mask
 
 
     def decoder_teacher_forcing(self, batch_trg, enc_out, encoder_mask):
