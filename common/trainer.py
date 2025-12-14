@@ -22,7 +22,10 @@ class Trainer:
         )
         # update every batch.
         num_steps = len(train_dataloader) * self.cfg.num_epochs
-        num_warmups = int(num_steps * self.cfg.num_warmups)
+        if self.cfg.num_warmups < 1.0:
+            num_warmups = int(num_steps * self.cfg.num_warmups)
+        else:
+            num_warmups = int(self.cfg.num_warmups)
         # sched = get_linear_schedule_with_warmup(opt, num_warmups, num_steps)
 
         d_model = self.cfg.d_model
@@ -35,9 +38,6 @@ class Trainer:
 
         sched = LambdaLR(opt, noam_lambda)
         return opt, sched
-
-    def example(self, preds, labels):
-        pass
 
     def train_one_epoch(self, train_dataloader, current_epoch):
         device = self.cfg.device
@@ -54,8 +54,8 @@ class Trainer:
             batch_loss = self.loss_fn.compute_loss(batch_logits, batch_trg[:, 1:].contiguous())
 
             # DEBUG
-            # print(batch_loss)
-            # input("break")
+            print(batch_loss)
+            input("break")
             # DEBUG
             batch_loss.backward()
 

@@ -15,7 +15,7 @@ min_freq: 5
 # training
 num_epochs: 1
 train_batch_size: 32
-num_warmups: 0.04
+num_warmups: 4000
 eval_freq: -1 # every $ batchs
 print_freq: 200
 #loss
