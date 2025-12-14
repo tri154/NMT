@@ -48,7 +48,7 @@ class Model(nn.Module):
         bs, mlen, d_model = enc_out.shape
 
         batch_trg = torch.full((bs, 1), self.sos_id, device=self.device, dtype=torch.long)
-        decoder_mask = None
+        decoder_mask = self.create_decoder_mask(batch_trg)
 
         decoder_out = self.decoder(batch_trg, enc_out, encoder_mask, decoder_mask)
         decoder_out = decoder_out[:, -1, :]
@@ -80,13 +80,11 @@ class Model(nn.Module):
         beam_max_len = enc_mlen + self.cfg.beam_max_length
 
         scores, full_sequences = self.__beam_search_first_step(enc_out, encoder_mask, beam_size, beam_max_len)
-        seqs_len= torch.ones(bs * beam_size, device=self.device).unsqueeze(1)
-        finished = torch.zeros(bs * beam_size, dtype=bool, device=self.device)
 
         enc_out = torch.repeat_interleave(enc_out, beam_size, 0)
         encoder_mask = torch.repeat_interleave(encoder_mask, beam_size, 0)
 
-        blocking_list = torch.tensor([self.pad_id, self.unk_id, self.sos_id], device=self.device, dtype=torch.long)
+        # blocking_list = torch.tensor([self.pad_id, self.unk_id, self.sos_id], device=self.device, dtype=torch.long)
         for len in range(2, beam_max_len):
             sequences = full_sequences[:, :len]
             decoder_mask = self.create_decoder_mask(sequences)
@@ -94,61 +92,56 @@ class Model(nn.Module):
 
             decoder_out = decoder_out[:, -1]
             logits = self.fc(decoder_out)
-            logits[..., blocking_list] = float("-inf")
+            # logits[..., blocking_list] = float("-inf")
 
             log_probs = torch.log_softmax(logits, dim=-1)
 
-            if finished.any():
-                log_probs[finished] = float("-inf")
-                log_probs[finished, self.pad_id] = 0
+            lprob, idx = log_probs.topk(beam_size)
+            lprob_rep = torch.full((1, beam_size), float("-inf"), device=self.device)
+            lprob_rep[:, 0] = 0
+            idx_rep = torch.full((1, beam_size), -1, device=self.device)
+            idx_rep[:, 0] = self.eos_id
 
-            seqs_len[~finished] += 1
-            vocab_size = log_probs.shape[-1]
+            check_eos = (full_sequences[:, len-1] == self.eos_id).view(-1, 1)
 
-            # length norm
-            # total_scores = (log_probs + scores)
-            # norm_factor = ((seqs_len + 5) / 6) ** self.cfg.length_penalty
-            # norm_scores = total_scores / norm_factor
-            # norm_scores = norm_scores.view(bs, beam_size * vocab_size)
-            # top_scores, top_indices = torch.topk(norm_scores, beam_size, dim=-1)
+            lprob = torch.where(check_eos, lprob_rep, lprob)
+            idx = torch.where(check_eos, idx_rep, idx)
 
             # not length norm
-            total_scores = (log_probs + scores)
-            total_scores = total_scores.view(bs, beam_size * vocab_size)
+            total_scores = (lprob + scores)
+            total_scores = total_scores.view(bs, -1)
             top_scores, top_indices = torch.topk(total_scores, beam_size, dim=-1)
 
-            # update selected sequences
-            selected_seqs = top_indices // vocab_size
+            selected_seqs = top_indices // beam_size
             offsets = torch.arange(bs, device=self.device).unsqueeze(1) * beam_size
             selected_seqs = (selected_seqs + offsets).view(-1)
 
-            selected_tokens = top_indices % vocab_size
+            selected_tokens = top_indices % beam_size
             selected_tokens = selected_tokens.view(-1)
 
-            # update selected tokens
             full_sequences[:, :len] = full_sequences[selected_seqs, :len]
-            full_sequences[:, len] = selected_tokens
+            full_sequences[:, len] = idx[selected_seqs, selected_tokens]
+            scores = top_scores.view(-1, 1)
 
-            # update scores (unormalized)
-            scores = torch.gather(total_scores.view(bs, -1), 1, top_indices).view(-1, 1)
-
-            # update seqs_len
-            seqs_len = seqs_len[selected_seqs]
-
-            # update finished
-            finished = finished[selected_seqs]
-            finished = finished | (selected_tokens == self.eos_id)
-
-            if finished.all():
+            check_eos = full_sequences[:, len] == self.eos_id
+            if check_eos.all():
                 break
+
+        full_sequences = full_sequences.cpu()
+        scores = scores.cpu()
+
+        seqs_len = [torch.where(seq == self.eos_id)[0] for seq in full_sequences]
+        seqs_len = [int(seq[0]) - 1 if seq.shape[0] > 0 else beam_max_len - 2 for seq in seqs_len]
+        seqs_len = torch.tensor(seqs_len).cpu()
 
         full_sequences = full_sequences.view(bs, beam_size, -1)
         norm_factor = ((seqs_len + 5) / 6) ** self.cfg.length_penalty
-        scores = scores / norm_factor
+
+        scores = scores.squeeze(1) / norm_factor
         scores = scores.view(bs, beam_size)
 
         best_idx = scores.argmax(dim=-1)
-        best_sequences = full_sequences[torch.arange(bs, device=self.device), best_idx]
+        best_sequences = full_sequences[torch.arange(bs), best_idx]
 
         return best_sequences
 
