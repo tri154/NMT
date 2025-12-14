@@ -13,8 +13,9 @@ class EncoderLayer(nn.Module):
         self.mha_ln = nn.LayerNorm(cfg.d_model)
         self.dropout = nn.Dropout(cfg.dropout)
         self.dropout1 = nn.Dropout(cfg.dropout)
+        self.use_pre_norm = cfg.pre_norm
 
-    def forward(self, batch_input, mask):
+    def post_norm(self, batch_input, mask):
         x = self.dropout(self.mha(batch_input, batch_input, batch_input, mask))
         x = x + batch_input
         x = self.mha_ln(x)
@@ -22,8 +23,24 @@ class EncoderLayer(nn.Module):
         x1 = self.dropout1(self.ffn(x))
         x1 = x1 + x
         x1 = self.ffn_ln(x1)
+        return x1
+
+    def pre_norm(self, batch_input, mask):
+        x_norm = self.mha_ln(batch_input)
+        x = self.dropout(
+            self.mha(x_norm, x_norm, x_norm, mask)
+        )
+        x = x + batch_input
+
+        x_norm = self.ffn_ln(x)
+        x1 = self.dropout1(self.ffn(x_norm))
+        x1 = x1 + x
 
         return x1
+
+    def forward(self, batch_input, mask):
+        fn = self.pre_norm if self.use_pre_norm else self.post_norm
+        return fn(batch_input, mask)
 
 
 class Encoder(nn.Module):

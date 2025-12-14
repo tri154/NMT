@@ -39,6 +39,7 @@ d_model: 512
 d_ff: 2048
 n_heads: 8
 pe_max_seq_len: 200
+pre_norm: true
 
 n_encoder_layers: 6
 n_decoder_layers: 6

@@ -21,7 +21,10 @@ class DecoderLayer(nn.Module):
         self.dropout1 = nn.Dropout(cfg.dropout)
         self.dropout2 = nn.Dropout(cfg.dropout)
 
-    def forward(self, batch_input, enc_out, src_mask, trg_mask):
+        self.use_pre_norm = cfg.pre_norm
+
+
+    def post_norm(self, batch_input, enc_out, src_mask, trg_mask):
         x = self.ln(
             batch_input + self.dropout(self.masked_mha(batch_input, batch_input, batch_input, trg_mask))
         )
@@ -35,6 +38,37 @@ class DecoderLayer(nn.Module):
         )
 
         return x
+
+    def pre_norm(self, batch_input, enc_out, src_mask, trg_mask):
+        x_norm = self.ln(batch_input)
+        x = batch_input + self.dropout(
+            self.masked_mha(
+                x_norm,
+                x_norm,
+                x_norm,
+                trg_mask
+            )
+        )
+
+        x = x + self.dropout1(
+            self.mha(
+                self.ln1(x),
+                enc_out,
+                enc_out,
+                src_mask
+            )
+        )
+
+        x = x + self.dropout2(
+            self.ffn(self.ln2(x))
+        )
+
+        return x
+
+
+    def forward(self, batch_input, enc_out, src_mask, trg_mask):
+        fn = self.pre_norm if self.use_pre_norm else self.post_norm
+        return fn(batch_input, enc_out, src_mask, trg_mask)
 
 
 class Decoder(nn.Module):
