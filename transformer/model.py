@@ -209,7 +209,7 @@ class Model(nn.Module):
         if trg_teacher is not None:
             out = self.decoder_teacher_forcing(trg_teacher, enc_out, encoder_mask)
         else:
-            # out = self.decoder_batch_beam(enc_out, encoder_mask)
-            out = self.decoder_batch_greedy(enc_out, encoder_mask)
+            out = self.decoder_batch_beam(enc_out, encoder_mask)
+            # out = self.decoder_batch_greedy(enc_out, encoder_mask)
             # out = self.decoder_greedy(enc_out, encoder_mask)
         return out

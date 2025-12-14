@@ -76,21 +76,39 @@ class WordTokenizer(Tokenizer):
         data = data.tolist()
         return data
 
-    def detokenize(self, data):
-        fn = np.vectorize(self.trg_id2token.get)
-        tokens = fn(data)
-        keep_mask = ~np.isin(data, np.array(self.additional_ids))
+    # def detokenize(self, data, tag='target'):
+    #     a = self.trg_id2token.get if tag == 'target' else self.src_id2token.get
+    #     fn = np.vectorize(a)
+    #     tokens = fn(data)
+    #     keep_mask = ~np.isin(data, np.array(self.additional_ids))
 
 
-        return [
-            " ".join(sent_token[mask])
-            for sent_token, mask in zip(tokens, keep_mask)
-        ]
+    #     return [
+    #         " ".join(sent_token[mask])
+    #         for sent_token, mask in zip(tokens, keep_mask)
+    #     ]
 
-        # res = []
-        # for sent in data:
-        #     sent = sent.cpu().numpy()
-        #     tokens = fn(sent).tolist()
-        #     tokens = [tok for tok in tokens if tok not in self.additional_tokens]
-        #     res.append(" ".join(tokens))
-        # return res
+
+    def detokenize(self, data, tag="target"):
+        if tag == "target":
+            id2token = self.trg_id2token
+        else:
+            id2token = self.src_id2token
+
+        sentences = []
+
+        for sent_ids in data:
+            tokens = []
+
+            for tid in sent_ids:
+                if tid == self.eos_id:
+                    break
+                if tid == self.sos_id:
+                    continue
+
+                tok = id2token.get(int(tid), self.unk)
+                tokens.append(tok)
+
+            sentences.append(" ".join(tokens))
+
+        return sentences
