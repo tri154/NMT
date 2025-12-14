@@ -26,17 +26,17 @@ class Trainer:
             num_warmups = int(num_steps * self.cfg.num_warmups)
         else:
             num_warmups = int(self.cfg.num_warmups)
-        # sched = get_linear_schedule_with_warmup(opt, num_warmups, num_steps)
+        sched = get_linear_schedule_with_warmup(opt, num_warmups, num_steps)
 
-        d_model = self.cfg.d_model
+        # d_model = self.cfg.d_model
 
-        def noam_lambda(step):
-          step = max(step, 1)
-          return (
-            d_model ** (-0.5) * min(step ** (-0.5), step * num_warmups ** (-1.5))
-            )
+        # def noam_lambda(step):
+          # step = max(step, 1)
+          # return (
+            # d_model ** (-0.5) * min(step ** (-0.5), step * num_warmups ** (-1.5))
+            # )
 
-        sched = LambdaLR(opt, noam_lambda)
+        # sched = LambdaLR(opt, noam_lambda)
         return opt, sched
 
     def train_one_epoch(self, train_dataloader, current_epoch):
