@@ -11,11 +11,16 @@ class PositionalEncoding(nn.Module):
         self.cfg = cfg
 
         pe = torch.zeros(self.max_seq_len, self.d_model)
+        position = torch.arange(self.max_seq_len).unsqueeze(1).float()
 
-        for pos in range(self.max_seq_len):
-            for i in range(0, self.d_model, 2):
-                pe[pos, i] = math.sin(pos/(10000**(2*i/self.d_model)))
-                pe[pos, i+1] = math.cos(pos/(10000**((2*i)/self.d_model)))
+        div_term = torch.exp(
+            torch.arange(0, self.d_model, 2).float() *
+            (-math.log(10000.0) / self.d_model)
+        )
+
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
 
@@ -30,7 +35,7 @@ class PositionalEncoding(nn.Module):
     def forward(self, batch_input):
         input_len = batch_input.shape[1]
         if input_len > self.max_seq_len:
-            self.cfg.logging("Input length is longer than max length supported by positional encoding.")
+            self.cfg.logging("Input length is longer than max length supported by positional encoding.", is_printed=True)
             batch_input = batch_input[:, :self.max_seq_len]
 
         x = batch_input * math.sqrt(self.d_model)

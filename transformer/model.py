@@ -22,9 +22,7 @@ class Model(nn.Module):
 
     def create_encoder_mask(self, batch_src):
         bs, mlen = batch_src.shape
-        src_lengths = (batch_src != self.pad_id).to(int).sum(dim=1)
-        padding_mask = torch.arange(mlen, device=self.device).expand(bs, mlen) >= src_lengths.unsqueeze(-1)
-        padding_mask = padding_mask.unsqueeze(1).unsqueeze(2)
+        padding_mask = (batch_src == self.pad_id).unsqueeze(1).unsqueeze(2)
         return padding_mask
 
 
@@ -76,7 +74,7 @@ class Model(nn.Module):
         return scores, full_sequences
 
 
-    def decoder_beam_search(self, enc_out, encoder_mask):
+    def decoder_batch_beam(self, enc_out, encoder_mask):
         beam_size = self.cfg.beam_size
         bs, enc_mlen, d_model = enc_out.shape
         beam_max_len = enc_mlen + self.cfg.beam_max_length
@@ -148,7 +146,7 @@ class Model(nn.Module):
 
         return best_sequences
 
-    def greedy_decode(self, enc_out, encoder_mask):
+    def decoder_batch_greedy(self, enc_out, encoder_mask):
         bs, enc_mlen, d_model = enc_out.shape
         max_len = enc_mlen + self.cfg.beam_max_length
         trg_indices = torch.full((bs, max_len), self.pad_id, device=self.device)
@@ -179,6 +177,28 @@ class Model(nn.Module):
         return trg_indices
 
 
+    def decoder_greedy(self, enc_out, encoder_mask):
+        bs, enc_mlen, d_model = enc_out.shape
+        maxlen = enc_mlen + self.cfg.beam_max_length
+        res = list()
+        for i in range(bs):
+            eout = enc_out[i].unsqueeze(0)
+            emask = encoder_mask[i].unsqueeze(0)
+            seqs = torch.ones((1, 1), device=self.device, dtype=torch.long) * self.sos_id
+            for j in range(maxlen - 1):
+                dmask = self.create_decoder_mask(seqs)
+                out = self.decoder(seqs, eout, emask, dmask)
+                out = out[:, -1]
+                logits = self.fc(out)
+                next_token = torch.argmax(logits, dim=-1).unsqueeze(0)
+                seqs = torch.concat([seqs, next_token], dim=-1)
+                if next_token[0, 0] == self.eos_id:
+                    break
+            res.append(seqs.squeeze(0))
+        res = torch.nn.utils.rnn.pad_sequence(res, padding_value=self.pad_id, batch_first=True)
+        return res
+
+
     def forward(self, batch_src, trg_teacher=None):
         encoder_mask = self.create_encoder_mask(batch_src)
         enc_out = self.encoder(batch_src, encoder_mask)
@@ -187,5 +207,6 @@ class Model(nn.Module):
             out = self.decoder_teacher_forcing(trg_teacher, enc_out, encoder_mask)
         else:
             # out = self.decoder_beam_search(enc_out, encoder_mask)
-            out = self.greedy_decode(enc_out, encoder_mask)
+            out = self.decoder_batch_greedy(enc_out, encoder_mask)
+            # out1 = self.decoder_greedy_search(enc_out, encoder_mask)
         return out
