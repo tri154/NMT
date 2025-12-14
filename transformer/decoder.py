@@ -84,6 +84,7 @@ class Decoder(nn.Module):
         self.decoder_layers = nn.ModuleList(
             [DecoderLayer(cfg) for _ in range(cfg.n_decoder_layers)]
         )
+        self.norm = nn.LayerNorm(cfg.d_model)
 
     def forward(self, batch_input, enc_out, src_mask, trg_mask):
         x = self.embedding(batch_input)
@@ -91,4 +92,5 @@ class Decoder(nn.Module):
 
         for layer in self.decoder_layers:
             x = layer(x, enc_out, src_mask, trg_mask)
+        x = self.norm(x)
         return x
