@@ -29,10 +29,10 @@ class Model(nn.Module):
     def create_decoder_mask(self, batch_trg):
         bs, mlen = batch_trg.shape
         mask = torch.triu(torch.ones(mlen, mlen, device=self.device), diagonal=1)
-        # mask = mask.bool().unsqueeze(0).unsqueeze(1)
-        mask = mask.bool()
-        padding_mask = (batch_trg == self.pad_id).unsqueeze(1).unsqueeze(2)
-        mask = mask | padding_mask
+        mask = mask.bool().unsqueeze(0).unsqueeze(1)
+        # mask = mask.bool()
+        # padding_mask = (batch_trg == self.pad_id).unsqueeze(1).unsqueeze(2)
+        # mask = mask | padding_mask
         return mask
 
 
@@ -119,8 +119,12 @@ class Model(nn.Module):
             selected_tokens = top_indices % beam_size
             selected_tokens = selected_tokens.view(-1)
 
-            full_sequences[:, :len] = full_sequences[selected_seqs, :len]
-            full_sequences[:, len] = idx[selected_seqs, selected_tokens]
+            new_full_sequences = full_sequences[selected_seqs].clone()
+            new_full_sequences[:, len] = idx[selected_seqs, selected_tokens]
+            full_sequences = new_full_sequences
+
+            # full_sequences[:, :len] = full_sequences[selected_seqs, :len]
+            # full_sequences[:, len] = idx[selected_seqs, selected_tokens]
             scores = top_scores.view(-1, 1)
 
             check_eos = full_sequences[:, len] == self.eos_id
