@@ -17,7 +17,9 @@ class Model(nn.Module):
         self.encoder = Encoder(cfg, tokenizer)
         self.decoder = Decoder(cfg, tokenizer)
 
-        self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab))
+        # self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab))
+        self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab), bias=False)
+        self.fc.weight = self.decoder.embedding.weight
         for p in self.parameters():
                 if p.dim() > 1:
                     nn.init.xavier_uniform_(p)

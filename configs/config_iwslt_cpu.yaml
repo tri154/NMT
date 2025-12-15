@@ -1,7 +1,7 @@
 device: cuda
 # folders
 result_path: results/iwslt
-data_dir: data/iwslt
+data_dir: data/iwslt_en_vi
 
 # preprocessing
 num_examples: -1

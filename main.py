@@ -16,7 +16,9 @@ def run_training(cfg):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_file', type=str, help='config file location.', default="configs/config_vlsp_cpu.yaml")
+    # dft = "configs/config_vlsp_cpu.yaml"
+    dft = "configs/config_iwslt_cpu.yaml"
+    parser.add_argument('--config_file', type=str, help='config file location.', default=dft)
     args = parser.parse_args()
 
     cfg = Config(args.config_file)
