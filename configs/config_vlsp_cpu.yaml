@@ -1,0 +1,50 @@
+device: cuda
+# folders
+result_path: results/vlsp
+data_dir: data/vlsp
+
+# preprocessing
+num_examples: -1
+train_max_len: 50
+lowercase: false
+
+# tokenizer
+tkn_type: word # bpe or word
+# word tokenizer
+min_freq: 5
+# bpe tokenizer
+src_model_prefix: spm_src
+trg_model_prefix: spm_trg
+source_vocab_size: 10000
+target_vocab_size: 8000
+
+# training
+num_epochs: 1
+train_batch_size: 32
+num_warmups: 4000
+eval_freq: -1 # every $ batchs
+print_freq: 200
+#loss
+label_smoothing: 0.1
+# optimizer
+lr: !!float 0.2 # scheduler detemines lr
+opt_b1: 0.9
+opt_b2: 0.98
+opt_eps: !!float 1e-9
+
+# inference
+test_batch_size: 4
+#beam
+beam_size: 3
+beam_max_length: 10 # should be smaller than pe_max_seq_len
+length_penalty: 0.6
+
+# model
+dropout: 0.1
+d_model: 512
+d_ff: 2048
+n_heads: 8
+pe_max_seq_len: 200
+pre_norm: true
+n_encoder_layers: 6
+n_decoder_layers: 6

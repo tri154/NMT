@@ -37,9 +37,16 @@ class Config:
         self.trg_tkn_path = os.path.join(self.result_path, 'trg_tkn')
         self.log_path = os.path.join(self.result_path, 'log.txt')
         self.check_device()
-        self.train_files = ("train.en", "train.vi")
-        self.dev_files = ("tst2012.en", "tst2012.vi")
-        self.test_files = ("tst2013.en", "tst2013.vi")
+        if "iwslt_en_vi" in self.data_dir:
+            self.train_files = ("train.en", "train.vi")
+            self.dev_files = ("tst2012.en", "tst2012.vi")
+            self.test_files = ("tst2013.en", "tst2013.vi")
+        elif "vlsp" in self.data_dir:
+            self.train_files = ("train.en", "train.vi")
+            self.dev_files = ("public_test.en", "public_test.vi")
+            self.test_files = ("test_temp.en", "test_temp.vi")
+        else:
+            raise Exception("Data doesn't exist.")
 
         self.files = {"train": self.train_files, "dev": self.dev_files, "test": self.test_files}
         for key, value in self.files.items():

@@ -2,7 +2,6 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 import torch
 from torch.optim.lr_scheduler import LambdaLR
-from transformers.optimization import get_linear_schedule_with_warmup
 
 
 class Trainer:
