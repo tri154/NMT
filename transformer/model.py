@@ -126,8 +126,8 @@ class Model(nn.Module):
             # new_full_sequences[:, i] = idx[selected_seqs, selected_tokens]
             # full_sequences = new_full_sequences
 
-            full_sequences[:, :len] = full_sequences[selected_seqs, :len]
-            full_sequences[:, len] = idx[selected_seqs, selected_tokens]
+            full_sequences[:, :i] = full_sequences[selected_seqs, :i]
+            full_sequences[:, i] = idx[selected_seqs, selected_tokens]
             scores = top_scores.view(-1, 1)
 
             check_eos = full_sequences[:, i] == self.eos_id
