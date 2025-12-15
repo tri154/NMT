@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from torchtext.data.metrics import bleu_score
-import sacrebleu
+# import sacrebleu
 
 class Tester:
     def __init__(self, cfg, dev_set, test_set):
