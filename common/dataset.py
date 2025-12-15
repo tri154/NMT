@@ -26,12 +26,13 @@ class CustomDataset(Dataset):
                 t = t + [pad] * (mlen_trg - len(t))
             src.append(s)
             trg.append(t)
-
-        src = self.tokenizer.token2ids(src, "source")
+        src_idx = self.tokenizer.token2ids(src, "source")
         if for_training:
-            trg = self.tokenizer.token2ids(trg, "target")
+            trg_idx = self.tokenizer.token2ids(trg, "target")
+        else:
+            trg_idx = trg
 
-        src = torch.tensor(src)
+        src_idx = torch.tensor(src_idx)
         if for_training:
-            trg = torch.tensor(trg)
-        return src, trg
+            trg_idx = torch.tensor(trg_idx)
+        return src_idx, trg_idx

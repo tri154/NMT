@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
+from torchtext.data.metrics import bleu_score
 import sacrebleu
 
 class Tester:
@@ -10,7 +11,10 @@ class Tester:
         self.test_set = test_set
 
     def cal_score(self, preds, labels):
-        return sacrebleu.corpus_bleu(preds, [labels]).score
+        labels = [[l] for l in labels]
+        # score = sacrebleu.corpus_bleu(preds, labels).score
+        score = bleu_score(preds, labels)
+        return score
 
     def example(self, preds, labels):
         N = len(preds)

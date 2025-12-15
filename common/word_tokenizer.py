@@ -25,22 +25,22 @@ class WordTokenizer(Tokenizer):
             return data.strip().split()
         raise Exception("Invalid type.")
 
-    def tokenize_with_vocab(self, data, tag):
-        if tag == "source":
-            vocab = self.src_vocab
-        elif tag == "target":
-            vocab = self.trg_vocab
-        else:
-            raise Exception("Invalid tag.")
+    def tokenize_with_vocab(self, data, tag=None):
+        # if tag == "source":
+        #     vocab = self.src_vocab
+        # elif tag == "target":
+        #     vocab = self.trg_vocab
+        # else:
+        #     raise Exception("Invalid tag.")
 
         res = list()
         for s in tqdm(data):
             temp = self.tokenize(s)
             temp = [self.sos] + temp + [self.eos]
-            temp = np.array(temp)
-            mask = np.isin(temp, vocab)
-            temp[~mask] = self.unk
-            res.append(temp.tolist())
+            # temp = np.array(temp)
+            # mask = np.isin(temp, vocab)
+            # temp[~mask] = self.unk
+            res.append(temp)
         return res
 
     def build_and_save_vocab(self, data, tag):
@@ -52,8 +52,8 @@ class WordTokenizer(Tokenizer):
             vocab = {word for word, freq in counter.items() if freq >= self.cfg.min_freq}
         else:
             vocab = counter.keys()
-        vocab = self.additional_tokens + list(vocab)
-        vocab = np.array(vocab)
+
+        vocab = self.additional_tokens + sorted(list(vocab))
 
         if tag == "source":
             self.src_vocab = vocab
@@ -69,24 +69,12 @@ class WordTokenizer(Tokenizer):
 
     def token2ids(self, data, tag):
         assert tag in ["source", "target"]
-        token2id_get = self.src_token2id.get if tag == "source" else self.trg_token2id.get
-        fn = np.vectorize(token2id_get)
+        token2id = self.src_token2id if tag == "source" else self.trg_token2id
 
-        data = fn(np.array(data))
-        data = data.tolist()
-        return data
-
-    # def detokenize(self, data, tag='target'):
-    #     a = self.trg_id2token.get if tag == 'target' else self.src_id2token.get
-    #     fn = np.vectorize(a)
-    #     tokens = fn(data)
-    #     keep_mask = ~np.isin(data, np.array(self.additional_ids))
-
-
-    #     return [
-    #         " ".join(sent_token[mask])
-    #         for sent_token, mask in zip(tokens, keep_mask)
-    #     ]
+        return [
+            [token2id.get(tok, self.unk_id) for tok in sent]
+            for sent in data
+        ]
 
 
     def detokenize(self, data, tag="target"):
@@ -109,6 +97,7 @@ class WordTokenizer(Tokenizer):
                 tok = id2token.get(int(tid), self.unk)
                 tokens.append(tok)
 
-            sentences.append(" ".join(tokens))
+            # sentences.append(" ".join(tokens))
+            sentences.append(tokens)
 
         return sentences

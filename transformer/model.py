@@ -18,6 +18,9 @@ class Model(nn.Module):
         self.decoder = Decoder(cfg, tokenizer)
 
         self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab))
+        for p in self.parameters():
+                if p.dim() > 1:
+                    nn.init.xavier_uniform_(p)
 
 
     def create_encoder_mask(self, batch_src):
@@ -85,8 +88,8 @@ class Model(nn.Module):
         encoder_mask = torch.repeat_interleave(encoder_mask, beam_size, 0)
 
         # blocking_list = torch.tensor([self.pad_id, self.unk_id, self.sos_id], device=self.device, dtype=torch.long)
-        for len in range(2, beam_max_len):
-            sequences = full_sequences[:, :len]
+        for i in range(2, beam_max_len):
+            sequences = full_sequences[:, :i]
             decoder_mask = self.create_decoder_mask(sequences)
             decoder_out = self.decoder(sequences, enc_out, encoder_mask, decoder_mask)
 
@@ -102,7 +105,7 @@ class Model(nn.Module):
             idx_rep = torch.full((1, beam_size), -1, device=self.device)
             idx_rep[:, 0] = self.eos_id
 
-            check_eos = (full_sequences[:, len-1] == self.eos_id).view(-1, 1)
+            check_eos = (full_sequences[:, i-1] == self.eos_id).view(-1, 1)
 
             lprob = torch.where(check_eos, lprob_rep, lprob)
             idx = torch.where(check_eos, idx_rep, idx)
@@ -120,14 +123,14 @@ class Model(nn.Module):
             selected_tokens = selected_tokens.view(-1)
 
             new_full_sequences = full_sequences[selected_seqs].clone()
-            new_full_sequences[:, len] = idx[selected_seqs, selected_tokens]
+            new_full_sequences[:, i] = idx[selected_seqs, selected_tokens]
             full_sequences = new_full_sequences
 
             # full_sequences[:, :len] = full_sequences[selected_seqs, :len]
             # full_sequences[:, len] = idx[selected_seqs, selected_tokens]
             scores = top_scores.view(-1, 1)
 
-            check_eos = full_sequences[:, len] == self.eos_id
+            check_eos = full_sequences[:, i] == self.eos_id
             if check_eos.all():
                 break
 
