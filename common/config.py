@@ -31,7 +31,11 @@ class Config:
         self.__dict__.update(file_config)
 
         # process config
+        os.makedirs(self.result_path, exist_ok=True)
         self.save_path = os.path.join(self.result_path, 'best.pt')
+        self.src_tkn_path = os.path.join(self.result_path, 'src_tkn.model')
+        self.trg_tkn_path = os.path.join(self.result_path, 'trg_tkn.model')
+        self.log_path = os.path.join(self.result_path, 'log.txt')
         self.check_device()
         self.train_files = ("train.en", "train.vi")
         self.dev_files = ("tst2012.en", "tst2012.vi")
@@ -42,7 +46,7 @@ class Config:
             value = [os.path.join(self.data_dir, v) for v in value]
             self.files[key] = value
 
-        self.cache_file = os.path.join(self.data_dir, "cache.pkl")
+        self.cache_file = os.path.join(self.result_path, "processed_data.pkl")
 
         self.log_config(True)
 

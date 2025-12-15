@@ -20,11 +20,11 @@ class Prepocessing:
         self.dev_set = res['dev']
         self.test_set = res['test']
 
-        # trained tokenizer's data.
-        self.src_addition = res["src_addition"]
-        self.trg_addition = res["trg_addition"]
+        if os.path.exists(self.cfg.src_tkn_path) and os.path.exists(self.cfg.trg_tkn_path):
+            self.tokenizer.load()
+        else:
+            raise Exception("data loaded, not found tokenizer save.")
 
-        self.tokenizer.assign_addition(self.src_addition, self.trg_addition)
 
         # logging
         log = ""
@@ -74,11 +74,8 @@ class Prepocessing:
     def __build_vocab(self, train_set):
         src = train_set["source"]
         trg = train_set["target"]
-        # src_vocab, src_token2id, src_id2token
-        src_tuple = self.tokenizer.build_and_save_vocab(src, tag="source")
-        # trg_vocab, src_token2id, src_id2token
-        trg_tuple = self.tokenizer.build_and_save_vocab(trg, tag="target")
-        return src_tuple, trg_tuple
+        self.tokenizer.build_and_save_vocab(src, tag="source")
+        self.tokenizer.build_and_save_vocab(trg, tag="target")
 
     def __prepare_data(self):
         res = dict()
@@ -87,7 +84,8 @@ class Prepocessing:
             filter = key == "train"
             res[key] = self.__load_data(src, target, filter)
 
-        src_tuple, trg_tuple = self.__build_vocab(res['train'])
+        self.__build_vocab(res['train'])
+        self.tokenizer.load()
 
         for key, value in res.items():
             src, trg = value["source"], value["target"]
@@ -98,7 +96,5 @@ class Prepocessing:
                 trg_tkn = self.tokenizer.tokenize(trg)
             res[key] = {"source": src_tkn,
                         "target": trg_tkn}
-        res["src_addition"] = src_tuple
-        res["trg_addition"] = trg_tuple
-        res["train"], res["dev"], res["test"]
+
         return res

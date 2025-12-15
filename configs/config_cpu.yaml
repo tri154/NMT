@@ -1,6 +1,5 @@
 device: cuda
 # folders
-log_path: logs/log.txt
 result_path: results/
 data_dir: data/
 
@@ -11,6 +10,12 @@ lowercase: false
 
 # word tokenizer
 min_freq: 5
+
+# bpe tokenizer
+src_model_prefix: spm_src
+trg_model_prefix: spm_trg
+source_vocab_size: 15000
+source_vocab_size: 7000
 
 # training
 num_epochs: 1
@@ -40,6 +45,5 @@ d_ff: 2048
 n_heads: 8
 pe_max_seq_len: 200
 pre_norm: true
-
 n_encoder_layers: 6
 n_decoder_layers: 6

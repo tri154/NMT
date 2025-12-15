@@ -6,3 +6,4 @@ from .tester import Tester
 from .trainer import Trainer
 from .tokenizer import Tokenizer
 from .word_tokenizer import WordTokenizer
+from .bpe import BPETokenizer

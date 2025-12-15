@@ -1,7 +1,6 @@
 device: cuda
 # folders
-log_path: logs/log.txt
-result_path: results/
+result_path: results/checkpoint1
 data_dir: data/
 
 # preprocessing
@@ -40,6 +39,5 @@ d_ff: 2048
 n_heads: 8
 pe_max_seq_len: 200
 pre_norm: true
-
 n_encoder_layers: 6
 n_decoder_layers: 6

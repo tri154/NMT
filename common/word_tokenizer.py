@@ -1,7 +1,7 @@
 from collections import Counter
-import numpy as np
 from tqdm import tqdm
 from common import Tokenizer
+import dill as pk
 
 class WordTokenizer(Tokenizer):
     def __init__(self, cfg):
@@ -26,20 +26,10 @@ class WordTokenizer(Tokenizer):
         raise Exception("Invalid type.")
 
     def tokenize_with_vocab(self, data, tag=None):
-        # if tag == "source":
-        #     vocab = self.src_vocab
-        # elif tag == "target":
-        #     vocab = self.trg_vocab
-        # else:
-        #     raise Exception("Invalid tag.")
-
         res = list()
         for s in tqdm(data):
             temp = self.tokenize(s)
             temp = [self.sos] + temp + [self.eos]
-            # temp = np.array(temp)
-            # mask = np.isin(temp, vocab)
-            # temp[~mask] = self.unk
             res.append(temp)
         return res
 
@@ -63,9 +53,12 @@ class WordTokenizer(Tokenizer):
             raise Exception("Invalid tag.")
 
         token2id, id2token = self.build_addition(tag)
-        return {"vocab": vocab,
+        addition = {"vocab": vocab,
                 "token2id": token2id,
                 "id2token": id2token}
+        path = self.cfg.src_tkn_path if tag == "source" else self.cfg.trg_tkn_path
+        pk.dump(addition, open(path, "wb"), -1)
+        self.cfg.logging(f"save to {path}")
 
     def token2ids(self, data, tag):
         assert tag in ["source", "target"]
@@ -101,3 +94,41 @@ class WordTokenizer(Tokenizer):
             sentences.append(tokens)
 
         return sentences
+
+    def load(self):
+        src_addition = pk.load(open(self.cfg.src_tkn_path, "rb"))
+        trg_addition = pk.load(open(self.cfg.trg_tkn_path, "rb"))
+        self.assign_addition(src_addition, trg_addition)
+
+
+    # self define
+
+    def assign_addition(self, src_addition, trg_addition):
+        """
+        src_addition, trg_addition: dict
+        keys -> value:
+            vocab -> np.array
+            token2id -> dict: str -> int
+            id2token --> dict: int -> str
+        return None
+        """
+        for key, value in src_addition.items():
+            setattr(self, "src_" + key, value)
+        for key, value in trg_addition.items():
+            setattr(self, "trg_" + key, value)
+
+
+
+    def build_addition(self, tag):
+        if tag == "source":
+            if self.src_token2id is None:
+                self.src_token2id = {t: idx for idx, t in enumerate(self.src_vocab)}
+                self.src_id2token = {idx: t for idx, t in enumerate(self.src_vocab)}
+                return self.src_token2id, self.src_id2token
+        elif tag == "target":
+            if self.trg_token2id is None:
+                self.trg_token2id = {t: idx for idx, t in enumerate(self.trg_vocab)}
+                self.trg_id2token = {idx: t for idx, t in enumerate(self.trg_vocab)}
+                return self.trg_token2id, self.trg_id2token
+        else:
+            raise Exception("Invalid tag.")
