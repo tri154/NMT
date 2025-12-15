@@ -1,6 +1,6 @@
 device: cuda
 # folders
-result_path: results/
+result_path: results/checkpoint1
 data_dir: data/
 
 # preprocessing
