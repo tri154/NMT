@@ -9,7 +9,7 @@ train_max_len: 50
 lowercase: false
 
 # tokenizer
-tkn_type = bpe # bpe or word
+tkn_type: bpe # bpe or word
 # word tokenizer
 min_freq: 5
 # bpe tokenizer
