@@ -97,7 +97,7 @@ class WordTokenizer(Tokenizer):
                 tok = id2token.get(int(tid), self.unk)
                 tokens.append(tok)
 
-            # sentences.append(" ".join(tokens))
-            sentences.append(tokens)
+            sentences.append(" ".join(tokens)) # for sacre bleu
+            # sentences.append(tokens) # for torchtext
 
         return sentences
