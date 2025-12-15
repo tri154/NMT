@@ -2,3 +2,4 @@
 **/log.txt
 data_temp/
 best.pt
+results/*

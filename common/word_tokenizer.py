@@ -7,6 +7,8 @@ class WordTokenizer(Tokenizer):
     def __init__(self, cfg):
         super().__init__(cfg)
         self.prepare_special_tokens()
+        self.src_model = cfg.src_tkn_path + ".pkl"
+        self.trg_model = cfg.trg_tkn_path + ".pkl"
 
     def prepare_special_tokens(self):
         # additional tokens share the same id in src and trg.
@@ -56,7 +58,7 @@ class WordTokenizer(Tokenizer):
         addition = {"vocab": vocab,
                 "token2id": token2id,
                 "id2token": id2token}
-        path = self.cfg.src_tkn_path if tag == "source" else self.cfg.trg_tkn_path
+        path = self.src_model if tag == "source" else self.trg_model
         pk.dump(addition, open(path, "wb"), -1)
         self.cfg.logging(f"save to {path}")
 
@@ -90,14 +92,14 @@ class WordTokenizer(Tokenizer):
                 tok = id2token.get(int(tid), self.unk)
                 tokens.append(tok)
 
-            # sentences.append(" ".join(tokens))
-            sentences.append(tokens)
+            sentences.append(" ".join(tokens))
+            # sentences.append(tokens)
 
         return sentences
 
     def load(self):
-        src_addition = pk.load(open(self.cfg.src_tkn_path, "rb"))
-        trg_addition = pk.load(open(self.cfg.trg_tkn_path, "rb"))
+        src_addition = pk.load(open(self.src_model, "rb"))
+        trg_addition = pk.load(open(self.trg_model, "rb"))
         self.assign_addition(src_addition, trg_addition)
 
 

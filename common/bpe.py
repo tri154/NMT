@@ -11,8 +11,11 @@ class BPETokenizer(Tokenizer):
         self.sp_trg = spm.SentencePieceProcessor()
 
         # Paths to save the trained models
-        self.src_model_prefix = cfg.src_model_prefix
-        self.trg_model_prefix = cfg.trg_model_prefix
+        self.src_model_prefix = cfg.src_tkn_path
+        self.trg_model_prefix = cfg.trg_tkn_path
+
+        self.src_model = self.src_model_prefix + ".model"
+        self.trg_model = self.trg_model_prefix + ".model"
 
         self.prepare_special_tokens()
 
@@ -81,39 +84,9 @@ class BPETokenizer(Tokenizer):
         #     cmd += f" {self.cfg.spm_extra_args}"
 
         spm.SentencePieceTrainer.train(cmd)
-
-        sp_model = self._get_model(tag)
-        sp_model.load(f"{prefix}.model")
-
-        vocab_list = []
-        token2id = {}
-        id2token = {}
-
-        for i in range(sp_model.get_piece_size()):
-            piece = sp_model.id_to_piece(i)
-            vocab_list.append(piece)
-            token2id[piece] = i
-            id2token[i] = piece
-
-        vocab_array = np.array(vocab_list)
-
-        if tag == "source":
-            self.src_vocab = vocab_array
-        else:
-            self.trg_vocab = vocab_array
-
         if os.path.exists(temp_file):
             os.remove(temp_file)
 
-        self.assign_addition(
-            {tag: {"token2id": token2id, "id2token": id2token}} if tag=="source" else {},
-            {tag: {"token2id": token2id, "id2token": id2token}} if tag=="target" else {}
-        )
-        return {
-            "vocab": vocab_array,
-            "token2id": token2id,
-            "id2token": id2token
-        }
 
     def token2ids(self, data, tag):
         sp_model = self._get_model(tag)
@@ -133,3 +106,26 @@ class BPETokenizer(Tokenizer):
             decoded_sentences.append(decoded)
 
         return decoded_sentences
+
+    def load(self):
+        def load_vocab(tag):
+            md = self.src_model if tag == "source" else self.trg_model
+            sp_model = self._get_model(tag)
+            sp_model.load(md)
+
+            vocab_list = []
+
+            for i in range(sp_model.get_piece_size()):
+                piece = sp_model.id_to_piece(i)
+                vocab_list.append(piece)
+
+            vocab_array = np.array(vocab_list)
+
+            if tag == "source":
+                self.src_vocab = vocab_array
+            else:
+                self.trg_vocab = vocab_array
+
+
+        load_vocab("source")
+        load_vocab("target")

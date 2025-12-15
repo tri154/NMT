@@ -1,8 +1,8 @@
-from common import Config, CustomDataset, Loss, Prepocessing, Tester, Trainer, WordTokenizer
+from common import Config, CustomDataset, Loss, Prepocessing, Tester, Trainer, WordTokenizer, BPETokenizer
 from transformer import Model
 
 def run_training(cfg):
-    tokenizer = WordTokenizer(cfg)
+    tokenizer = WordTokenizer(cfg) if cfg.tkn_type == "word" else BPETokenizer(cfg)
     pre = Prepocessing(cfg, tokenizer)
     train_set = CustomDataset(cfg, pre.train_set, tokenizer)
     dev_set = CustomDataset(cfg, pre.dev_set, tokenizer)

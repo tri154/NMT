@@ -20,7 +20,7 @@ class Prepocessing:
         self.dev_set = res['dev']
         self.test_set = res['test']
 
-        if os.path.exists(self.cfg.src_tkn_path) and os.path.exists(self.cfg.trg_tkn_path):
+        if os.path.exists(self.tokenizer.src_model) and os.path.exists(self.tokenizer.trg_model):
             self.tokenizer.load()
         else:
             raise Exception("data loaded, not found tokenizer save.")
@@ -89,11 +89,12 @@ class Prepocessing:
 
         for key, value in res.items():
             src, trg = value["source"], value["target"]
-            src_tkn = self.tokenizer.tokenize_with_vocab(src)
+            src_tkn = self.tokenizer.tokenize_with_vocab(src, tag="source")
             if key == "train":
-                trg_tkn = self.tokenizer.tokenize_with_vocab(trg)
+                trg_tkn = self.tokenizer.tokenize_with_vocab(trg, tag="target")
             else:
-                trg_tkn = self.tokenizer.tokenize(trg)
+                # trg_tkn = self.tokenizer.tokenize(trg)
+                trg_tkn = trg
             res[key] = {"source": src_tkn,
                         "target": trg_tkn}
 
