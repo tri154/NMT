@@ -13,13 +13,14 @@ class Model(nn.Module):
         self.sos_id = tokenizer.sos_id
         self.eos_id = tokenizer.eos_id
         self.device = cfg.device
+        vocab_size = len(tokenizer.vocab)
 
+        self.shared_embedding = nn.Embedding(vocab_size, cfg.d_model)
         self.encoder = Encoder(cfg, tokenizer)
         self.decoder = Decoder(cfg, tokenizer)
 
-        # self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab))
-        self.fc = nn.Linear(cfg.d_model, len(tokenizer.trg_vocab), bias=False)
-        self.fc.weight = self.decoder.embedding.weight
+        self.fc = nn.Linear(cfg.d_model, vocab_size, bias=False)
+        self.fc.weight = self.shared_embedding.weight
         for p in self.parameters():
                 if p.dim() > 1:
                     nn.init.xavier_uniform_(p)
@@ -43,7 +44,7 @@ class Model(nn.Module):
 
     def decoder_teacher_forcing(self, batch_trg, enc_out, encoder_mask):
         decoder_mask = self.create_decoder_mask(batch_trg)
-        decoder_out = self.decoder(batch_trg, enc_out, encoder_mask, decoder_mask)
+        decoder_out = self.decoder(self.shared_embedding(batch_trg), enc_out, encoder_mask, decoder_mask)
 
         logits = self.fc(decoder_out)
         return logits
@@ -55,7 +56,7 @@ class Model(nn.Module):
         batch_trg = torch.full((bs, 1), self.sos_id, device=self.device, dtype=torch.long)
         decoder_mask = self.create_decoder_mask(batch_trg)
 
-        decoder_out = self.decoder(batch_trg, enc_out, encoder_mask, decoder_mask)
+        decoder_out = self.decoder(self.shared_embedding(batch_trg), enc_out, encoder_mask, decoder_mask)
         decoder_out = decoder_out[:, -1, :]
         logits = self.fc(decoder_out)
 
@@ -93,7 +94,7 @@ class Model(nn.Module):
         for i in range(2, beam_max_len):
             sequences = full_sequences[:, :i]
             decoder_mask = self.create_decoder_mask(sequences)
-            decoder_out = self.decoder(sequences, enc_out, encoder_mask, decoder_mask)
+            decoder_out = self.decoder(self.shared_embedding(sequences), enc_out, encoder_mask, decoder_mask)
 
             decoder_out = decoder_out[:, -1]
             logits = self.fc(decoder_out)
@@ -166,7 +167,7 @@ class Model(nn.Module):
             trg_input = trg_indices[:, :i+1]
             trg_mask = self.create_decoder_mask(trg_input)
 
-            output = self.decoder(trg_input, enc_out, encoder_mask, trg_mask)
+            output = self.decoder(self.shared_embedding(trg_input), enc_out, encoder_mask, trg_mask)
 
             logits = self.fc(output[:, -1])
             if finished.any():
@@ -195,7 +196,7 @@ class Model(nn.Module):
             seqs = torch.ones((1, 1), device=self.device, dtype=torch.long) * self.sos_id
             for j in range(maxlen - 1):
                 dmask = self.create_decoder_mask(seqs)
-                out = self.decoder(seqs, eout, emask, dmask)
+                out = self.decoder(self.shared_embedding(seqs), eout, emask, dmask)
                 out = out[:, -1]
                 logits = self.fc(out)
                 next_token = torch.argmax(logits, dim=-1).unsqueeze(0)
@@ -209,7 +210,7 @@ class Model(nn.Module):
 
     def forward(self, batch_src, trg_teacher=None):
         encoder_mask = self.create_encoder_mask(batch_src)
-        enc_out = self.encoder(batch_src, encoder_mask)
+        enc_out = self.encoder(self.shared_embedding(batch_src), encoder_mask)
 
         if trg_teacher is not None:
             out = self.decoder_teacher_forcing(trg_teacher, enc_out, encoder_mask)

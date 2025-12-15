@@ -49,18 +49,18 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.cfg = cfg
         self.n_layers = cfg.n_encoder_layers
-        vocab_size = len(tokenizer.src_vocab)
+        # vocab_size = len(tokenizer.vocab)
 
-        self.embedding = nn.Embedding(vocab_size, cfg.d_model)
+        # self.embedding = nn.Embedding(vocab_size, cfg.d_model)
         self.pe = PositionalEncoding(cfg)
 
         self.encoder_layers = nn.ModuleList(
             [EncoderLayer(cfg) for _ in range(self.n_layers)]
         )
 
-    def forward(self, batch_input, mask):
-        embs = self.embedding(batch_input)
-        embs = self.pe(embs)
+    def forward(self, batch_embs, mask):
+        # embs = self.embedding(batch_input)
+        embs = self.pe(batch_embs)
 
         for layer in self.encoder_layers:
             embs = layer(embs, mask)

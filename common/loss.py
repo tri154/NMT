@@ -8,7 +8,7 @@ class Loss:
             ignore_index=tokenizer.pad_id,
             label_smoothing=self.cfg.label_smoothing
         )
-        self.vocab_size = len(tokenizer.trg_vocab)
+        self.vocab_size = len(tokenizer.vocab)
         self.confidence = 1.0 - self.cfg.label_smoothing
         self.pad_id = tokenizer.pad_id
 

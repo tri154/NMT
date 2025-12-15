@@ -33,8 +33,6 @@ class Config:
         # process config
         os.makedirs(self.result_path, exist_ok=True)
         self.save_path = os.path.join(self.result_path, 'best.pt')
-        self.src_tkn_path = os.path.join(self.result_path, 'src_tkn')
-        self.trg_tkn_path = os.path.join(self.result_path, 'trg_tkn')
         self.log_path = os.path.join(self.result_path, 'log.txt')
         self.check_device()
         if "iwslt_en_vi" in self.data_dir:

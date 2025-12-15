@@ -26,9 +26,9 @@ class CustomDataset(Dataset):
                 t = t + [pad] * (mlen_trg - len(t))
             src.append(s)
             trg.append(t)
-        src_idx = self.tokenizer.token2ids(src, "source")
+        src_idx = self.tokenizer.token2ids(src)
         if for_training:
-            trg_idx = self.tokenizer.token2ids(trg, "target")
+            trg_idx = self.tokenizer.token2ids(trg)
         else:
             trg_idx = trg
 

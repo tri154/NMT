@@ -20,7 +20,7 @@ class Prepocessing:
         self.dev_set = res['dev']
         self.test_set = res['test']
 
-        if os.path.exists(self.tokenizer.src_model) and os.path.exists(self.tokenizer.trg_model):
+        if os.path.exists(self.tokenizer.model_path):
             self.tokenizer.load()
         else:
             raise Exception("data loaded, not found tokenizer save.")
@@ -37,7 +37,25 @@ class Prepocessing:
                 log += f"Size of {key}.vocab: {sz} .\n"
         self.cfg.logging(log, is_printed=True)
 
+
+    def clean_text_simple(self, s, lowercase=False):
+        s = str(s)
+        s = html.unescape(s)
+
+        s = re.sub(r"<[^>]+>", " ", s)
+
+        s = unicodedata.normalize("NFKC", s)
+
+        if lowercase:
+            s = s.lower()
+
+        s = re.sub(r"\s+", " ", s).strip()
+
+        return s
+
+
     def __clean_text(self, s):
+        # return self.clean_text_simple(s, lowercase=self.cfg.lowercase)
         lowercase = self.cfg.lowercase
         s = str(s)
         s = html.unescape(s)
@@ -74,8 +92,7 @@ class Prepocessing:
     def __build_vocab(self, train_set):
         src = train_set["source"]
         trg = train_set["target"]
-        self.tokenizer.build_and_save_vocab(src, tag="source")
-        self.tokenizer.build_and_save_vocab(trg, tag="target")
+        self.tokenizer.build_and_save_vocab(src, trg)
 
     def __prepare_data(self):
         res = dict()
@@ -89,9 +106,9 @@ class Prepocessing:
 
         for key, value in res.items():
             src, trg = value["source"], value["target"]
-            src_tkn = self.tokenizer.tokenize_with_vocab(src, tag="source")
+            src_tkn = self.tokenizer.tokenize_with_vocab(src)
             if key == "train":
-                trg_tkn = self.tokenizer.tokenize_with_vocab(trg, tag="target")
+                trg_tkn = self.tokenizer.tokenize_with_vocab(trg)
             else:
                 # trg_tkn = self.tokenizer.tokenize(trg)
                 trg_tkn = trg

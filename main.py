@@ -1,6 +1,5 @@
 from common import Config, CustomDataset, Loss, Prepocessing, Tester, Trainer, WordTokenizer, BPETokenizer
 from transformer import Model
-import argparse
 
 def run_training(cfg):
     tokenizer = WordTokenizer(cfg) if cfg.tkn_type == "word" else BPETokenizer(cfg)
@@ -15,11 +14,6 @@ def run_training(cfg):
     trainer = trainer.train(cfg.num_epochs, cfg.train_batch_size)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    # dft = "configs/config_vlsp_cpu.yaml"
-    dft = "configs/config_iwslt_cpu.yaml"
-    parser.add_argument('--config_file', type=str, help='config file location.', default=dft)
-    args = parser.parse_args()
-
-    cfg = Config(args.config_file)
+    dft = "configs/config.yaml"
+    cfg = Config(dft)
     run_training(cfg)

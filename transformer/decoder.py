@@ -76,9 +76,9 @@ class Decoder(nn.Module):
     def __init__(self, cfg, tokenizer):
         super(Decoder, self).__init__()
         self.cfg = cfg
-        vocab_size = len(tokenizer.trg_vocab)
+        # vocab_size = len(tokenizer.vocab)
 
-        self.embedding = nn.Embedding(vocab_size, cfg.d_model)
+        # self.embedding = nn.Embedding(vocab_size, cfg.d_model)
         self.pe = PositionalEncoding(cfg)
 
         self.decoder_layers = nn.ModuleList(
@@ -88,9 +88,9 @@ class Decoder(nn.Module):
         if cfg.pre_norm:
             self.norm = nn.LayerNorm(cfg.d_model)
 
-    def forward(self, batch_input, enc_out, src_mask, trg_mask):
-        x = self.embedding(batch_input)
-        x = self.pe(x)
+    def forward(self, batch_embs, enc_out, src_mask, trg_mask):
+        # x = self.embedding(batch_input)
+        x = self.pe(batch_embs)
 
         for layer in self.decoder_layers:
             x = layer(x, enc_out, src_mask, trg_mask)

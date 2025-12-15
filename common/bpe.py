@@ -2,20 +2,20 @@ import os
 import sentencepiece as spm
 import numpy as np
 from tqdm import tqdm
-from common import Tokenizer
 
-class BPETokenizer(Tokenizer):
+class BPETokenizer:
     def __init__(self, cfg):
-        super().__init__(cfg)
-        self.sp_src = spm.SentencePieceProcessor()
-        self.sp_trg = spm.SentencePieceProcessor()
+        self.cfg = cfg
+        self.pad = "<pad>"
+        self.unk = "<unk>"
+        self.sos = "<sos>"
+        self.eos = "<eos>"
 
-        # Paths to save the trained models
-        self.src_model_prefix = cfg.src_tkn_path
-        self.trg_model_prefix = cfg.trg_tkn_path
+        self.sp = spm.SentencePieceProcessor()
 
-        self.src_model = self.src_model_prefix + ".model"
-        self.trg_model = self.trg_model_prefix + ".model"
+        self.prefix_name = self.cfg.tkn_prefix
+        self.model_prefix = os.path.join(self.cfg.result_path, self.prefix_name)
+        self.model_path = self.model_prefix + ".model"
 
         self.prepare_special_tokens()
 
@@ -28,45 +28,38 @@ class BPETokenizer(Tokenizer):
         self.additional_tokens = [self.pad, self.unk, self.sos, self.eos]
         self.additional_ids = [self.pad_id, self.unk_id, self.sos_id, self.eos_id]
 
-    def _get_model(self, tag):
-        if tag == "source":
-            return self.sp_src
-        elif tag == "target":
-            return self.sp_trg
-        else:
-            raise ValueError("Invalid tag. Must be 'source' or 'target'.")
-
     def tokenize(self, line):
         if isinstance(line, str):
-            return self.sp_src.encode_as_pieces(line)
+            return self.sp.encode_as_pieces(line)
         elif isinstance(line, list):
-            return [self.sp_src.encode_as_pieces(s) for s in line]
+            return [self.sp.encode_as_pieces(s) for s in line]
         raise ValueError("Invalid type for tokenize.")
 
-    def tokenize_with_vocab(self, data, tag):
-        sp_model = self._get_model(tag)
+    def tokenize_with_vocab(self, data):
+        sp_model = self.sp
 
         res = []
-        for s in tqdm(data, desc=f"Tokenizing {tag}"):
+        for s in tqdm(data, desc="Tokenizing"):
             pieces = sp_model.encode_as_pieces(s)
             pieces = [self.sos] + pieces + [self.eos]
             res.append(pieces)
 
         return res
 
-    def build_and_save_vocab(self, data, tag):
-        prefix = self.src_model_prefix if tag == "source" else self.trg_model_prefix
-
-        temp_file = f"{prefix}_train_data.txt"
-        with open(temp_file, "w", encoding="utf-8") as f:
-            for line in data:
+    def build_and_save_vocab(self, src_data, trg_data):
+        temp_file = f"{self.prefix_name}_train_data.txt"
+        with open(temp_file, "a", encoding="utf-8") as f:
+            for line in src_data:
+                f.write(line + "\n")
+        with open(temp_file, "a", encoding="utf-8") as f:
+            for line in trg_data:
                 f.write(line + "\n")
 
-        vocab_size = getattr(self.cfg, f"{tag}_vocab_size")
+        vocab_size = self.cfg.vocab_size
 
         cmd = (
             f"--input={temp_file} "
-            f"--model_prefix={prefix} "
+            f"--model_prefix={self.model_prefix} "
             f"--vocab_size={vocab_size} "
             f"--model_type=bpe "
             f"--character_coverage=1.0 "
@@ -88,8 +81,8 @@ class BPETokenizer(Tokenizer):
             os.remove(temp_file)
 
 
-    def token2ids(self, data, tag):
-        sp_model = self._get_model(tag)
+    def token2ids(self, data):
+        sp_model = self.sp
 
         def tokens_to_ids(tokens):
             return [sp_model.piece_to_id(t) for t in tokens]
@@ -102,30 +95,21 @@ class BPETokenizer(Tokenizer):
             if isinstance(sent_ids, np.ndarray):
                 sent_ids = sent_ids.tolist()
 
-            decoded = self.sp_trg.decode_ids(sent_ids)
+            decoded = self.sp.decode_ids(sent_ids)
             decoded_sentences.append(decoded)
 
         return decoded_sentences
 
     def load(self):
-        def load_vocab(tag):
-            md = self.src_model if tag == "source" else self.trg_model
-            sp_model = self._get_model(tag)
-            sp_model.load(md)
+        self.sp.load(self.model_path)
+        sp_model = self.sp
 
-            vocab_list = []
+        vocab_list = []
 
-            for i in range(sp_model.get_piece_size()):
-                piece = sp_model.id_to_piece(i)
-                vocab_list.append(piece)
+        for i in range(sp_model.get_piece_size()):
+            piece = sp_model.id_to_piece(i)
+            vocab_list.append(piece)
 
-            vocab_array = np.array(vocab_list)
+        vocab_array = np.array(vocab_list)
 
-            if tag == "source":
-                self.src_vocab = vocab_array
-            else:
-                self.trg_vocab = vocab_array
-
-
-        load_vocab("source")
-        load_vocab("target")
+        self.vocab = vocab_array

@@ -13,10 +13,8 @@ tkn_type: bpe # bpe or word
 # word tokenizer
 min_freq: 5
 # bpe tokenizer
-src_model_prefix: spm_src
-trg_model_prefix: spm_trg
-source_vocab_size: 10000
-target_vocab_size: 8000
+tkn_prefix: spm_tkn
+vocab_size: 10000
 
 # training
 num_epochs: 1

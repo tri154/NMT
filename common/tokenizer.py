@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from tqdm import tqdm
 
 class Tokenizer(ABC):
 
