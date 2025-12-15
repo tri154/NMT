@@ -2,7 +2,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from torchtext.data.metrics import bleu_score
-# import sacrebleu
+import sacrebleu
 
 class Tester:
     def __init__(self, cfg, dev_set, test_set):
@@ -11,9 +11,9 @@ class Tester:
         self.test_set = test_set
 
     def cal_score(self, preds, labels):
-        labels = [[l] for l in labels]
-        # score = sacrebleu.corpus_bleu(preds, labels).score
-        score = bleu_score(preds, labels)
+        score = sacrebleu.corpus_bleu(preds, [labels]).score
+        # labels = [[l] for l in labels]
+        # score = bleu_score(preds, labels)
         return score
 
     def example(self, preds, labels):

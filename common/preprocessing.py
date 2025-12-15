@@ -95,7 +95,8 @@ class Prepocessing:
             if key == "train":
                 trg_tkn = self.tokenizer.tokenize_with_vocab(trg)
             else:
-                trg_tkn = self.tokenizer.tokenize(trg)
+                # trg_tkn = self.tokenizer.tokenize(trg) # for torch text bleu
+                trg_tkn = trg # for sacrebleu
             res[key] = {"source": src_tkn,
                         "target": trg_tkn}
         res["src_addition"] = src_tuple
