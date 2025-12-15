@@ -13,8 +13,8 @@ class Loss:
         self.pad_id = tokenizer.pad_id
 
     def compute_loss(self, logits, labels):
-        return self.label_smoothing(logits, labels)
-        # return self.compute_cross_entropy(logits, labels)
+        # return self.label_smoothing(logits, labels)
+        return self.compute_cross_entropy(logits, labels)
 
     def compute_cross_entropy(self, logits, labels):
         # tackle padding.
