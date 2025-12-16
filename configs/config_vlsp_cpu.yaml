@@ -22,6 +22,7 @@ train_batch_size: 32
 num_warmups: 4000
 eval_freq: -1 # every $ batchs
 print_freq: 200
+bidirectional: true
 #loss
 label_smoothing: 0.1
 # optimizer

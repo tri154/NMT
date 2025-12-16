@@ -1,17 +1,37 @@
 from torch.utils.data import Dataset
 import torch
+import random
 
 class CustomDataset(Dataset):
 
-    def __init__(self, cfg, data, tokenizer):
-        self.source, self.value = data['source'], data['target']
+    def __init__(self, cfg, data, tokenizer, bidirect=False):
         self.tokenizer = tokenizer
+
+        src, tgt = data["source"], data["target"]
+
+        if bidirect:
+            self.source = src + tgt
+            self.target = tgt + src
+        else:
+            self.source = src
+            self.target = tgt
+
+        if bidirect:
+            seed = 2
+            indices = list(range(len(src)))
+            random.seed(seed)
+            random.shuffle(indices)
+
+            self.source = [src[i] for i in indices]
+            self.target = [tgt[i] for i in indices]
+
+        assert len(self.source) == len(self.target)
 
     def __len__(self):
         return len(self.source)
 
     def __getitem__(self, idx):
-        return self.source[idx], self.value[idx]
+        return self.source[idx], self.target[idx]
 
     def collate_fn(self, batch, for_training):
         # training: pad both src and trg, tokenize both src, trg.
