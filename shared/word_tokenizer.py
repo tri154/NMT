@@ -1,11 +1,14 @@
 from collections import Counter
 from tqdm import tqdm
-from common import Tokenizer
+from shared import Tokenizer
 import dill as pk
 
 class WordTokenizer(Tokenizer):
+    # Deprecated, now use shared vocab.
+
     def __init__(self, cfg):
         super().__init__(cfg)
+        raise Exception("Deprecated")
         self.prepare_special_tokens()
         self.src_model = cfg.src_tkn_path + ".pkl"
         self.trg_model = cfg.trg_tkn_path + ".pkl"

@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 
 class Tokenizer(ABC):
+    # Deprecated, now use shared vocab.
 
     def __init__(self, cfg):
+        raise Exception("Deprecated")
         self.cfg = cfg
         self.pad = "<pad>"
         self.unk = "<unk>"

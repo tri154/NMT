@@ -1,4 +1,4 @@
-from common import Config, CustomDataset, Loss, Prepocessing, Tester, Trainer, WordTokenizer, BPETokenizer
+from shared import Config, CustomDataset, Loss, Prepocessing, Tester, Trainer, WordTokenizer, BPETokenizer
 from transformer import Model
 
 def run_training(cfg):

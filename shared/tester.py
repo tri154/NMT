@@ -47,6 +47,8 @@ class Tester:
                 batch_preds = tokenizer.detokenize(batch_preds.cpu().numpy())
                 preds.extend(batch_preds)
                 labels.extend(batch_trg)
+                breakpoint()
+                break
         self.example(preds, labels)
         score = self.cal_score(preds, labels)
         return score
