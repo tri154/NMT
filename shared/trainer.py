@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader
-from torch.optim import AdamW
+from torch.optim import Adam
 import torch
 from torch.optim.lr_scheduler import LambdaLR
 
@@ -14,7 +14,7 @@ class Trainer:
         self.loss_fn = loss_fn
 
     def prepare_optimizer_scheduler(self, train_dataloader):
-        opt = AdamW(self.model.parameters(),
+        opt = Adam(self.model.parameters(),
                    lr=self.cfg.lr,
                    betas=(self.cfg.opt_b1, self.cfg.opt_b2),
                    eps=self.cfg.opt_eps
