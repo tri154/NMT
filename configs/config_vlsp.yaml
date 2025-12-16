@@ -5,7 +5,7 @@ data_dir: data/vlsp
 
 # preprocessing
 num_examples: -1
-train_max_len: 50
+train_max_len: -1
 lowercase: false
 
 # tokenizer

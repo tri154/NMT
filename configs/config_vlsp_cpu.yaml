@@ -5,11 +5,11 @@ data_dir: data/vlsp
 
 # preprocessing
 num_examples: -1
-train_max_len: 50
+train_max_len: -1
 lowercase: false
 
 # tokenizer
-tkn_type: word # bpe or word
+tkn_type: bpe # bpe or word
 # word tokenizer
 min_freq: 5
 # bpe tokenizer

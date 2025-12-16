@@ -41,8 +41,8 @@ class Config:
             self.test_files = ("tst2013.en", "tst2013.vi")
         elif "vlsp" in self.data_dir:
             self.train_files = ("train.en", "train.vi")
-            self.dev_files = ("public_test.en", "public_test.vi")
-            self.test_files = ("test_temp.en", "test_temp.vi")
+            self.dev_files = ("dev.en", "dev.vi")
+            self.test_files = ("public_test.en", "public_test.vi")
         else:
             raise Exception("Data doesn't exist.")
 
