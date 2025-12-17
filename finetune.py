@@ -124,7 +124,7 @@ def load_data():
 def load_model(r, alpha):
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name = "unsloth/Qwen2.5-3B-Instruct",
-        max_seq_length = 512,
+        max_seq_length = 1024,
         dtype = None,
         load_in_4bit = True
     )
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         output_dir = OUTPUT_DIR,
         per_device_train_batch_size = 32,
         per_device_eval_batch_size = 32,
-        gradient_accumulation_steps = 1,
+        gradient_accumulation_steps = 4,
 
         learning_rate = 1e-4,
         num_train_epochs = 1,
