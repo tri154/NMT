@@ -124,7 +124,7 @@ def load_data():
 def load_model(r, alpha):
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name = "unsloth/Qwen2.5-3B-Instruct",
-        max_seq_length = 2048,
+        max_seq_length = 512,
         dtype = None,
         load_in_4bit = True
     )
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     OUTPUT_DIR = "./qwen25_mt_lora"
     token = os.environ.get("HF_TOKEN")
 
-    model, tokenizer = load_model(16, 16)
+    model, tokenizer = load_model(64, 128)
     train_dataset, valid_dataset = load_data()
 
 
@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
         learning_rate = 1e-4,
         num_train_epochs = 1,
-        max_steps=1500,
+        max_steps=15000,
         warmup_steps=100,
         lr_scheduler_type = "cosine",
 
@@ -169,8 +169,8 @@ if __name__ == "__main__":
         bf16 = is_bfloat16_supported(),
 
         logging_steps = 100,
-        eval_steps = 100,
-        save_steps = 100,
+        eval_steps = 1000,
+        save_steps = 1000,
         save_total_limit = 2,
         optim = "paged_adamw_8bit",
         report_to = "none",
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         train_dataset = train_dataset,
         eval_dataset = valid_dataset,
         dataset_text_field = "text",
-        max_seq_length = 2048,
+        max_seq_length = 512,
         packing = True,
         args = training_args,
     )
