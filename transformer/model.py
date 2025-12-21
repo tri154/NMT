@@ -22,12 +22,16 @@ class Model(nn.Module):
 
         self.fc = nn.Linear(cfg.d_model, vocab_size, bias=False)
         self.fc.weight = self.shared_embedding.weight
-        for p in self.parameters():
-                if p.dim() > 1:
-                    # nn.init.xavier_uniform_(p)
-                    # depend on what layer, to specify std
-                    # CONTINUE
-                    trunc_normal_init_(p)
+        for name, p in self.named_parameters():
+            if p.dim() > 1:
+                # nn.init.xavier_uniform_(p)
+                if "embedding" in name:
+                    fan_out = p.shape[1]
+                    std = 1.0 / (fan_out ** 0.5)
+                else:
+                    fan_in = p.shape[0]
+                    std = 1.0 / (fan_in ** 0.5)
+                trunc_normal_init_(p, std=std)
 
 
     def create_encoder_mask(self, batch_src):

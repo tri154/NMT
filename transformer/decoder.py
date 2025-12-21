@@ -1,7 +1,8 @@
 import torch.nn as nn
 
 from transformer import MultiHeadAttention
-from transformer import FeedForwardLayer
+# from transformer import FeedForwardLayer
+from transformer import SwiGLU
 from transformer import PositionalEncoding
 
 class DecoderLayer(nn.Module):
@@ -15,7 +16,7 @@ class DecoderLayer(nn.Module):
         self.masked_mha = MultiHeadAttention(cfg)
         self.mha = MultiHeadAttention(cfg)
 
-        self.ffn = FeedForwardLayer(cfg)
+        self.ffn = SwiGLU(cfg)
 
         self.dropout = nn.Dropout(cfg.dropout)
         self.dropout1 = nn.Dropout(cfg.dropout)

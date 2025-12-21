@@ -1,13 +1,14 @@
 import torch.nn as nn
 from transformer import PositionalEncoding
 from transformer import MultiHeadAttention
-from transformer import FeedForwardLayer
+# from transformer import FeedForwardLayer
+from transformer import SwiGLU
 
 class EncoderLayer(nn.Module):
 
     def __init__(self, cfg):
         super(EncoderLayer, self).__init__()
-        self.ffn = FeedForwardLayer(cfg)
+        self.ffn = SwiGLU(cfg)
         self.ffn_ln = nn.RMSNorm(cfg.d_model)
         self.mha = MultiHeadAttention(cfg)
         self.mha_ln = nn.RMSNorm(cfg.d_model)

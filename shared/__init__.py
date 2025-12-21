@@ -37,8 +37,3 @@ def trunc_normal_init_(tensor: torch.Tensor, std: float = 1.0, lower: float = -2
             tensor.clip_(lower * comp_std, upper * comp_std)
 
     return tensor
-
-# class CastedLinear(nn.Module):
-
-#     def __init__(self, in_features, out_features):
-#         super().__init__()

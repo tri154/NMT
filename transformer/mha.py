@@ -12,14 +12,14 @@ class MultiHeadAttention(nn.Module):
         self.n_heads = cfg.n_heads
         self.d_model = cfg.d_model
 
-        self.wq = nn.Linear(self.d_model, self.d_model)
-        self.wk = nn.Linear(self.d_model, self.d_model)
-        self.wv = nn.Linear(self.d_model, self.d_model)
+        self.wq = nn.Linear(self.d_model, self.d_model, bias=False)
+        self.wk = nn.Linear(self.d_model, self.d_model, bias=False)
+        self.wv = nn.Linear(self.d_model, self.d_model, bias=False)
 
         self.scale = math.sqrt(self.d_model // self.n_heads)
         self.dropout = nn.Dropout(cfg.dropout) if cfg.dropout != 0 else None
 
-        self.wo = nn.Linear(self.d_model, self.d_model)
+        self.wo = nn.Linear(self.d_model, self.d_model, bias=False)
 
     def forward(self, query, key, value, mask=None):
         Q = self.wq(query)
