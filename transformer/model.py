@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from transformer import Encoder
 from transformer import Decoder
+from shared import trunc_normal_init_
 
 class Model(nn.Module):
 
@@ -23,7 +24,10 @@ class Model(nn.Module):
         self.fc.weight = self.shared_embedding.weight
         for p in self.parameters():
                 if p.dim() > 1:
-                    nn.init.xavier_uniform_(p)
+                    # nn.init.xavier_uniform_(p)
+                    # depend on what layer, to specify std
+                    # CONTINUE
+                    trunc_normal_init_(p)
 
 
     def create_encoder_mask(self, batch_src):

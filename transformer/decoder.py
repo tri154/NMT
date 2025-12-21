@@ -8,9 +8,9 @@ class DecoderLayer(nn.Module):
 
     def __init__(self, cfg):
         super(DecoderLayer, self).__init__()
-        self.ln = nn.LayerNorm(cfg.d_model)
-        self.ln1 = nn.LayerNorm(cfg.d_model)
-        self.ln2 = nn.LayerNorm(cfg.d_model)
+        self.ln = nn.RMSNorm(cfg.d_model)
+        self.ln1 = nn.RMSNorm(cfg.d_model)
+        self.ln2 = nn.RMSNorm(cfg.d_model)
 
         self.masked_mha = MultiHeadAttention(cfg)
         self.mha = MultiHeadAttention(cfg)
@@ -86,7 +86,7 @@ class Decoder(nn.Module):
         )
         self.norm = None
         if cfg.pre_norm:
-            self.norm = nn.LayerNorm(cfg.d_model)
+            self.norm = nn.RMSNorm(cfg.d_model)
 
     def forward(self, batch_embs, enc_out, src_mask, trg_mask):
         # x = self.embedding(batch_input)

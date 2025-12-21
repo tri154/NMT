@@ -8,9 +8,9 @@ class EncoderLayer(nn.Module):
     def __init__(self, cfg):
         super(EncoderLayer, self).__init__()
         self.ffn = FeedForwardLayer(cfg)
-        self.ffn_ln = nn.LayerNorm(cfg.d_model)
+        self.ffn_ln = nn.RMSNorm(cfg.d_model)
         self.mha = MultiHeadAttention(cfg)
-        self.mha_ln = nn.LayerNorm(cfg.d_model)
+        self.mha_ln = nn.RMSNorm(cfg.d_model)
         self.dropout = nn.Dropout(cfg.dropout)
         self.dropout1 = nn.Dropout(cfg.dropout)
         self.use_pre_norm = cfg.pre_norm
