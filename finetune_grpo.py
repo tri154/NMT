@@ -202,7 +202,7 @@ def filter_data(train_dataset, tokenizer):
     print("Max prompt length (p90):", maximum_length)
     dataset = train_dataset.select(np.where(np.array(tokenized["L"]) <= maximum_length)[0])
     dataset = dataset.rename_column("text", "prompt")
-    return dataset
+    return dataset, maximum_length + 1
 
 
 if __name__ == "__main__":
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     train_dataset, max_prompt_length = filter_data(train_dataset, tokenizer)
 
 
-    max_completion_length = 1024 - max_prompt_length
+    max_completion_length = 512 - max_prompt_length
 
     vllm_sampling_params = SamplingParams(
         min_p = 0.1,
