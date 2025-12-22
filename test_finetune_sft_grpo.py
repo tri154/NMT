@@ -122,7 +122,7 @@ if __name__ == "__main__":
     )
     model.load_adapter(args.sft_model, adapter_name="sft_custom")
     model.load_adapter(args.grpo_model, adapter_name="grpo_custom")
-    model.set_adapter(["sft", "grpo"])
+    model.set_adapter(["sft_custom", "grpo_custom"])
     print("keys: ", model.peft_config.keys())
     print("active: ", model.active_adapters)
 
