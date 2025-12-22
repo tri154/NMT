@@ -74,8 +74,8 @@ def load_parallel_bidirectional(src_path, tgt_path, src_lang, tgt_lang):
 def prepare_data():
     TRAIN_EN = "data/vlsp_grpo/train.en"
     TRAIN_VI = "data/vlsp_grpo/train.vi"
-    VALID_EN = "data/vlsp_grpo/dev.en"
-    VALID_VI = "data/vlsp_grpo/dev.vi"
+    # VALID_EN = "data/vlsp_grpo/dev.en"
+    # VALID_VI = "data/vlsp_grpo/dev.vi"
 
     train_dataset = load_parallel_bidirectional(
         TRAIN_EN, TRAIN_VI,
@@ -188,7 +188,7 @@ def load_data():
 
     return train_dataset
 
-def filter_data(train_dataset):
+def filter_data(train_dataset, tokenizer):
     tokenized = train_dataset.map(
         lambda x: {
             "tokens": tokenizer(
@@ -212,8 +212,8 @@ if __name__ == "__main__":
         raise Exception("not token")
 
     train_dataset = load_data()
-    train_dataset, max_prompt_length = filter_data(train_dataset)
     model, tokenizer = load_model(32, 32)
+    train_dataset, max_prompt_length = filter_data(train_dataset, tokenizer)
 
 
     max_completion_length = 1024 - max_prompt_length
