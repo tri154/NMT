@@ -1,5 +1,7 @@
 import torch.nn as nn
-from transformer import PositionalEncoding
+import math
+
+# from transformer import PositionalEncoding
 from transformer import MultiHeadAttention
 # from transformer import FeedForwardLayer
 from transformer import SwiGLU
@@ -53,15 +55,17 @@ class Encoder(nn.Module):
         # vocab_size = len(tokenizer.vocab)
 
         # self.embedding = nn.Embedding(vocab_size, cfg.d_model)
-        self.pe = PositionalEncoding(cfg)
+        # self.pe = PositionalEncoding(cfg)
 
         self.encoder_layers = nn.ModuleList(
             [EncoderLayer(cfg) for _ in range(self.n_layers)]
         )
+        self.scale = math.sqrt(cfg.d_model)
 
     def forward(self, batch_embs, mask):
         # embs = self.embedding(batch_input)
-        embs = self.pe(batch_embs)
+        # embs = self.pe(batch_embs)
+        embs = batch_embs * self.scale
 
         for layer in self.encoder_layers:
             embs = layer(embs, mask)

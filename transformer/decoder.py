@@ -1,9 +1,10 @@
 import torch.nn as nn
+import math
 
 from transformer import MultiHeadAttention
 # from transformer import FeedForwardLayer
 from transformer import SwiGLU
-from transformer import PositionalEncoding
+# from transformer import PositionalEncoding
 
 class DecoderLayer(nn.Module):
 
@@ -80,18 +81,20 @@ class Decoder(nn.Module):
         # vocab_size = len(tokenizer.vocab)
 
         # self.embedding = nn.Embedding(vocab_size, cfg.d_model)
-        self.pe = PositionalEncoding(cfg)
+        # self.pe = PositionalEncoding(cfg)
 
         self.decoder_layers = nn.ModuleList(
             [DecoderLayer(cfg) for _ in range(cfg.n_decoder_layers)]
         )
+        self.scale = math.sqrt(cfg.d_model)
         self.norm = None
         if cfg.pre_norm:
             self.norm = nn.RMSNorm(cfg.d_model)
 
     def forward(self, batch_embs, enc_out, src_mask, trg_mask):
         # x = self.embedding(batch_input)
-        x = self.pe(batch_embs)
+        # x = self.pe(batch_embs)
+        x = batch_embs * self.scale
 
         for layer in self.decoder_layers:
             x = layer(x, enc_out, src_mask, trg_mask)

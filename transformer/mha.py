@@ -2,6 +2,8 @@ import torch.nn as nn
 import torch
 import math
 
+from transformer import RotaryEmbedding, apply_rotary
+
 class MultiHeadAttention(nn.Module):
 
     def __init__(self, cfg):
@@ -21,6 +23,12 @@ class MultiHeadAttention(nn.Module):
 
         self.wo = nn.Linear(self.d_model, self.d_model, bias=False)
 
+        self.rope = RotaryEmbedding(
+            hidden_dim=self.d_model // self.n_heads,
+            max_position_embeddings=cfg.pe_max_seq_len,
+            base=10000.0
+        )
+
     def forward(self, query, key, value, mask=None):
         Q = self.wq(query)
         K = self.wk(key)
@@ -29,6 +37,9 @@ class MultiHeadAttention(nn.Module):
         Q = Q.view(*Q.shape[:-1], self.n_heads, -1).permute(0, 2, 1, 3)
         K = K.view(*K.shape[:-1], self.n_heads, -1).permute(0, 2, 1, 3)
         V = V.view(*V.shape[:-1], self.n_heads, -1).permute(0, 2, 1, 3)
+
+        Q = apply_rotary(Q, self.rope(Q.shape[-2]))
+        K = apply_rotary(K, self.rope(K.shape[-2]))
 
         attention = torch.matmul(Q, K.permute(0, 1, 3, 2)) / self.scale
 

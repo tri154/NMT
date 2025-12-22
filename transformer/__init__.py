@@ -1,4 +1,5 @@
 from .pe import PositionalEncoding
+from .rope import RotaryEmbedding, apply_rotary
 from .ffn import FeedForwardLayer
 from .swiglu import SwiGLU
 from .mha import MultiHeadAttention
