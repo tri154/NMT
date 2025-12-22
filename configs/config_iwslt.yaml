@@ -14,7 +14,7 @@ tkn_type: bpe # bpe or word
 min_freq: 5
 # bpe tokenizer
 tkn_prefix: spm_tkn
-vocab_size: 10000
+vocab_size: 15000
 
 # training
 num_epochs: 20
@@ -22,7 +22,7 @@ train_batch_size: 128
 num_warmups: 4000
 eval_freq: -1 # every $ batchs
 print_freq: 200
-bidirectional: true
+bidirect: true
 #loss
 label_smoothing: 0.1
 # optimizer
