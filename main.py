@@ -4,7 +4,7 @@ from transformer import Model
 def run_training(cfg):
     tokenizer = WordTokenizer(cfg) if cfg.tkn_type == "word" else BPETokenizer(cfg)
     pre = Prepocessing(cfg, tokenizer)
-    train_set = CustomDataset(cfg, pre.train_set, tokenizer)
+    train_set = CustomDataset(cfg, pre.train_set, tokenizer, bidirect=cfg.bidirect)
     dev_set = CustomDataset(cfg, pre.dev_set, tokenizer)
     test_set = CustomDataset(cfg, pre.test_set, tokenizer)
     model = Model(cfg, tokenizer).to(cfg.device)
