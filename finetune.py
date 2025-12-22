@@ -29,6 +29,7 @@ def format_mt(example):
     ]
 
     return {
+        # tokenizer should be defined outside.
         "text": tokenizer.apply_chat_template(
             messages,
             tokenize=False,
