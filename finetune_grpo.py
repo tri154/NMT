@@ -216,13 +216,6 @@ if __name__ == "__main__":
     model, tokenizer = load_model(32, 32)
 
 
-
-    model.push_to_hub(
-        "ledas/Qwen2.5-3B-Instruct-LoRA-GRPO",
-        adapter_name="default",
-        token=token,
-    )
-
     max_completion_length = 1024 - max_prompt_length
 
     vllm_sampling_params = SamplingParams(
@@ -254,4 +247,21 @@ if __name__ == "__main__":
         save_steps = 100,
         report_to = "none", # Can use Weights & Biases
         output_dir = OUTPUT_DIR,
+    )
+
+    trainer = GRPOTrainer(
+        model = model,
+        processing_class = tokenizer,
+        reward_funcs = [
+            mt_reward_fn,
+        ],
+        args = training_args,
+        train_dataset = train_dataset,
+    )
+    trainer.train()
+
+    model.push_to_hub(
+        "ledas/Qwen2.5-3B-Instruct-LoRA-GRPO",
+        adapter_name="default",
+        token=token,
     )
