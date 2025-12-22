@@ -5,6 +5,7 @@ def run_training(cfg):
     tokenizer = WordTokenizer(cfg) if cfg.tkn_type == "word" else BPETokenizer(cfg)
     pre = Prepocessing(cfg, tokenizer)
     train_set = CustomDataset(cfg, pre.train_set, tokenizer, bidirect=cfg.bidirect)
+    cfg.logging(f"train set length: {len(train_set)} .", is_printed=True)
     dev_set = CustomDataset(cfg, pre.dev_set, tokenizer)
     test_set = CustomDataset(cfg, pre.test_set, tokenizer)
     model = Model(cfg, tokenizer).to(cfg.device)

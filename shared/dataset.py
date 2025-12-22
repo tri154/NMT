@@ -18,12 +18,12 @@ class CustomDataset(Dataset):
 
         if bidirect:
             seed = 2
-            indices = list(range(len(src)))
+            indices = list(range(len(self.source)))
             random.seed(seed)
             random.shuffle(indices)
 
-            self.source = [src[i] for i in indices]
-            self.target = [tgt[i] for i in indices]
+            self.source = [self.source[i] for i in indices]
+            self.target = [self.target[i] for i in indices]
 
         assert len(self.source) == len(self.target)
 
