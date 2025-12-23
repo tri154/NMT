@@ -60,7 +60,7 @@ class Prepocessing:
         s = str(s)
         s = html.unescape(s)
         s = re.sub(r"<[^>]+>", " ", s)
-        s = "".join(ch for ch in s if not unicodedata.category(ch).startswith("P"))
+        # s = "".join(ch for ch in s if not unicodedata.category(ch).startswith("P"))
         if lowercase:
             s = s.lower()
         s = re.sub(r"\s+", " ", s).strip()

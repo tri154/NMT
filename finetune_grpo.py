@@ -238,13 +238,13 @@ if __name__ == "__main__":
         optim = "adamw_8bit",
         logging_steps = 1,
         per_device_train_batch_size = 1,
-        gradient_accumulation_steps = 1, # Increase to 4 for smoother training
+        gradient_accumulation_steps = 4, # Increase to 4 for smoother training
         num_generations = 4, # Decrease if out of memory
         max_prompt_length = max_prompt_length,
         max_completion_length = max_completion_length,
         # num_train_epochs = 1, # Set to 1 for a full training run
-        max_steps = 100,
-        save_steps = 100,
+        max_steps = 5000,
+        save_steps = 1500,
         report_to = "none", # Can use Weights & Biases
         output_dir = OUTPUT_DIR,
     )
