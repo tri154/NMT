@@ -16,7 +16,7 @@ This branch contains the code of Transformer version **Bidirect + punc** as desc
 | Modern  | [git](https://github.com/tri154/NMT/tree/1da8247c88d9) |[notebook](https://www.kaggle.com/code/saverysad/imporved-nmt?scriptVersionId=287782478) |
 | Modern + bidirect  | [git](https://github.com/tri154/NMT/tree/1da8247c88d9) |[notebook](https://www.kaggle.com/code/trikaggle/imporved-nmt?scriptVersionId=287799505) |
 | Birdirect + no_punc  | [git](https://github.com/tri154/NMT/tree/4d01426c9a1a) |[notebook](https://www.kaggle.com/code/saverysad/nmt-bidirect-actual-rerun?scriptVersionId=287781906) |
-| Birdirect + punc  | [git](https://github.com/tri154/NMT/tree/e34267b10012) |[notebook](https://www.kaggle.com/code/saverysad/nmt-bidirect-actual-rerun?scriptVersionId=287916769) |
+| Birdirect + punc  | [git](https://github.com/tri154/NMT) |[notebook](https://www.kaggle.com/code/saverysad/nmt-bidirect-actual-rerun?scriptVersionId=287916769) |
 
 ## Environment setup
 For Transformer from scratch, only requires [pytorch >= 2.8.0](https://pytorch.org/get-started/previous-versions/#:~:text=org/whl/cpu-,v2.8.0,-Wheel) and:
@@ -37,7 +37,7 @@ Or follow installation from [official unsloth notebook](https://docs.unsloth.ai/
 
 ## Training Transformer from scratch
 To train Transformer from scratch, modify `configs/config.yaml` file (default config file in `main.py`).
-Other variants need its specific config file.
+Other variants need their specific config file.
 
 
 #### `configs/config.yaml`
@@ -101,13 +101,13 @@ The test score will be printed when training is done.
 ## Finetuning for VLSP task
 ### SFT stage:
 ```bash
-HF_TOKEN = <your_huggingface_token> python finetune_sft.py
+HF_TOKEN=<your_huggingface_token> python finetune_sft.py
 ```
 Make sure that the pushed model name is correctly set in the `finetune_sft.py`.
 
 ### GRPO stage:
 ```bash
-HF_TOKEN = <your_huggingface_token> python finetune_grpo.py
+HF_TOKEN=<your_huggingface_token> python finetune_grpo.py
 ```
 
 Make sure that the adapter name from the SFT stage and the pushed model name are correctly set in `finetune_grpo.py`
