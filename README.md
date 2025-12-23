@@ -113,7 +113,7 @@ HF_TOKEN=<your_huggingface_token> python finetune_grpo.py
 Make sure that the adapter name from the SFT stage and the pushed model name are correctly set in `finetune_grpo.py`
 
 ### Evaluation
-Pretrained adapter of two stages:
+Pretrained adapters of two stages:
 - SFT: [ledas/Qwen2.5-3B-Instruct-LoRA-SFT](https://huggingface.co/ledas/Qwen2.5-3B-Instruct-LoRA-SFT)
 - GRPO: [ledas/Qwen2.5-3B-Instruct-LoRA-GRPO-5000](https://huggingface.co/ledas/Qwen2.5-3B-Instruct-LoRA-GRPO-5000)
 
@@ -143,3 +143,6 @@ python test_finetune_sft_grpo.py --base_model "unsloth/Qwen2.5-3B-Instruct" \
 To evaluate on custom test set, simply change `--test_src` and `--test_trg ` to the files. **Make sure `--direction` is set correctly.**
 
 Example evaluation notebook: [Kaggle](https://www.kaggle.com/code/nguynduyanh2004/grpo-nmt-nmt?scriptVersionId=287920371)
+
+## Email
+22028165@vnu.edu.vn
